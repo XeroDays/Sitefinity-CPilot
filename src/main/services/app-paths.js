@@ -3,7 +3,9 @@ const os = require("os");
 const path = require("path");
 
 const SETTINGS_FILENAME = "settings.json";
-const DEFAULT_DIR_NAME = "Sitefinity C-Pilot";
+const DEFAULT_DIR_NAME = "Sitefinity CPilot";
+const LEGACY_DIR_NAME = "Sitefinity C-Pilot";
+const LEGACY_SUBDIRS = ["db", "Logs"];
 
 let cachedDataDir = null;
 
@@ -45,25 +47,14 @@ function documentsDir() {
 }
 
 function settingsFilePath() {
-    return path.join(userDataDir(), SETTINGS_FILENAME);
-}
-
-function readDataDirFromSettings() {
-    try {
-        const raw = fs.readFileSync(settingsFilePath(), "utf8");
-        const parsed = JSON.parse(raw);
-        const dir = parsed && typeof parsed.dataDir === "string" ? parsed.dataDir.trim() : "";
-        return dir || null;
-    } catch {
-        return null;
-    }
+    return path.join(getDataDir(), SETTINGS_FILENAME);
 }
 
 /**
  * Root folder for Sitefinity C-Pilot user data.
  *
- * Precedence: `CPILOT_DATA_DIR` env -> `dataDir` in settings.json ->
- * `Documents/Sitefinity C-Pilot`. Resolved once per process.
+ * Precedence: `CPILOT_DATA_DIR` env, otherwise `Documents/Sitefinity CPilot`.
+ * Resolved once per process.
  */
 function getDataDir() {
     if (cachedDataDir) return cachedDataDir;
@@ -71,11 +62,7 @@ function getDataDir() {
     const fromEnv = typeof process.env.CPILOT_DATA_DIR === "string"
         ? process.env.CPILOT_DATA_DIR.trim()
         : "";
-    const resolved = fromEnv
-        || readDataDirFromSettings()
-        || path.join(documentsDir(), DEFAULT_DIR_NAME);
-
-    cachedDataDir = resolved;
+    cachedDataDir = fromEnv || path.join(documentsDir(), DEFAULT_DIR_NAME);
     return cachedDataDir;
 }
 
@@ -104,9 +91,53 @@ function resetCache() {
     cachedDataDir = null;
 }
 
+/**
+ * Copy a file tree into destDir. Existing destination files are left untouched.
+ */
+function copyMissingTree(sourceDir, destDir) {
+    if (!fs.existsSync(sourceDir)) return;
+    ensureDir(destDir);
+    fs.readdirSync(sourceDir, { withFileTypes: true }).forEach(function (entry) {
+        const from = path.join(sourceDir, entry.name);
+        const to = path.join(destDir, entry.name);
+        if (entry.isDirectory()) {
+            copyMissingTree(from, to);
+        } else if (entry.isFile() && !fs.existsSync(to)) {
+            fs.copyFileSync(from, to);
+        }
+    });
+}
+
+/**
+ * Copy database, logs, and settings from the previous layout when the new
+ * files are missing. Old folders are left in place.
+ *
+ * @param {{ documentsDir?: string, targetDir?: string, legacySettingsFile?: string }} [options]
+ */
+function migrateLegacyData(options) {
+    const opts = options || {};
+    const docs = opts.documentsDir || documentsDir();
+    const target = opts.targetDir || getDataDir();
+    const legacyRoot = path.join(docs, LEGACY_DIR_NAME);
+
+    if (fs.existsSync(legacyRoot) && path.resolve(legacyRoot) !== path.resolve(target)) {
+        LEGACY_SUBDIRS.forEach(function (name) {
+            copyMissingTree(path.join(legacyRoot, name), path.join(target, name));
+        });
+    }
+
+    const legacySettings = opts.legacySettingsFile || path.join(userDataDir(), SETTINGS_FILENAME);
+    const newSettings = path.join(target, SETTINGS_FILENAME);
+    if (fs.existsSync(legacySettings) && !fs.existsSync(newSettings)) {
+        ensureDir(path.dirname(newSettings));
+        fs.copyFileSync(legacySettings, newSettings);
+    }
+}
+
 module.exports = {
     SETTINGS_FILENAME,
     DEFAULT_DIR_NAME,
+    LEGACY_DIR_NAME,
     getDataDir,
     getDefaultDataDir,
     settingsFilePath,
@@ -115,5 +146,6 @@ module.exports = {
     ensureDir,
     dataPath,
     subDir,
-    resetCache
+    resetCache,
+    migrateLegacyData
 };

@@ -39,11 +39,25 @@ function loadHeavyModules() {
       const { initDatabase } = require("./services/db/database");
       const appPaths = require("./services/app-paths");
 
+      try {
+        appPaths.migrateLegacyData();
+      } catch (err) {
+        log.error("legacy data migration failed", { error: String(err.message || err) });
+      }
+
       // Initialise SQLite database
       try {
         initDatabase(appPaths.getDataDir());
       } catch (err) {
         log.error("database init failed", { error: String(err.message || err) });
+        const { dialog } = require("electron");
+        dialog.showErrorBox(
+          "Database failed to initialise",
+          "The native database module could not be loaded. " +
+          "This is usually caused by an ABI mismatch after npm install.\n\n" +
+          "Fix: run  npm run rebuild  in the project root, then restart the app.\n\n" +
+          "Details: " + String(err.message || err)
+        );
       }
 
       registerIpcHandlers();

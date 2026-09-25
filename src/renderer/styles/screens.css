@@ -39,6 +39,19 @@
   flex: 1;
 }
 
+.preferences-panel {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.preferences-panel__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+
 .cpilot-screen__footer {
   display: flex;
   align-items: center;
@@ -149,8 +162,8 @@
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #2dc98c;
-  border-color: #2dc98c;
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
 }
 
 .btn-secondary {
@@ -176,13 +189,13 @@
 }
 
 .btn-danger {
-  background: rgba(220, 38, 38, 0.15);
-  color: #f87171;
-  border-color: rgba(220, 38, 38, 0.35);
+  background: var(--danger-bg);
+  color: var(--badge-delete-text);
+  border-color: var(--status-danger-border);
 }
 
 .btn-danger:hover:not(:disabled) {
-  background: rgba(220, 38, 38, 0.25);
+  background: var(--danger-bg-hover);
 }
 
 .btn-sm {
@@ -245,7 +258,7 @@
 .form-textarea:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.2);
+  box-shadow: 0 0 0 2px var(--accent-ring);
 }
 
 .form-input::placeholder,
@@ -263,8 +276,12 @@
 }
 
 .form-select option {
-  background: #1a2332;
+  background: var(--select-option-bg);
   color: var(--text-primary);
+}
+
+[data-theme="light"] .form-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 8L1 3h10L6 8z' fill='%235c6b7e'/%3E%3C/svg%3E");
 }
 
 .form-textarea {
@@ -430,11 +447,11 @@
 }
 
 .data-table tbody tr:hover td {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--row-hover);
 }
 
 .data-table tbody tr.is-selected td {
-  background: rgba(52, 211, 153, 0.05);
+  background: var(--accent-wash);
 }
 
 .data-table__checkbox {
@@ -586,7 +603,7 @@
 
 /* ── Log Output ──────────────────────────────────────────────────────────────── */
 .log-output {
-  background: #050810;
+  background: var(--bg-log);
   border: 1px solid var(--border-subtle);
   border-radius: 10px;
   padding: 0.75rem 1rem;
@@ -605,10 +622,10 @@
   padding: 1px 0;
 }
 
-.log-entry--success { color: #34d399; }
-.log-entry--error   { color: #f87171; }
-.log-entry--warn    { color: #fbbf24; }
-.log-entry--info    { color: #60a5fa; }
+.log-entry--success { color: var(--log-success); }
+.log-entry--error   { color: var(--log-error); }
+.log-entry--warn    { color: var(--log-warn); }
+.log-entry--info    { color: var(--log-info); }
 
 /* ── Mapping Table ───────────────────────────────────────────────────────────── */
 .mapping-table {
@@ -640,7 +657,7 @@
 }
 
 .mapping-table tbody tr:hover td {
-  background: rgba(255, 255, 255, 0.025);
+  background: var(--row-hover);
 }
 
 .mapping-type-tag {
@@ -662,11 +679,11 @@
 }
 
 .connection-result.is-success {
-  border-color: rgba(52, 211, 153, 0.35);
+  border-color: var(--accent-border);
 }
 
 .connection-result.is-error {
-  border-color: rgba(220, 38, 38, 0.35);
+  border-color: var(--status-danger-border);
 }
 
 .connection-result__row {
@@ -737,7 +754,7 @@
 .detail-drawer-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: var(--drawer-overlay);
   z-index: 49;
   opacity: 0;
   pointer-events: none;
@@ -779,17 +796,17 @@
 }
 
 .diff-val--changed {
-  background: rgba(217, 119, 6, 0.1);
+  background: var(--badge-conflict-bg);
   border-radius: 4px;
   padding: 2px 4px;
-  color: #fbbf24;
+  color: var(--badge-conflict-text);
 }
 
 .diff-val--new {
-  background: rgba(5, 150, 105, 0.12);
+  background: var(--badge-create-bg);
   border-radius: 4px;
   padding: 2px 4px;
-  color: #34d399;
+  color: var(--badge-create-text);
 }
 
 /* ── Empty State ─────────────────────────────────────────────────────────────── */
@@ -864,27 +881,27 @@
 }
 
 .alert--warning {
-  background: rgba(217, 119, 6, 0.12);
-  border: 1px solid rgba(217, 119, 6, 0.35);
-  color: #fbbf24;
+  background: var(--badge-conflict-bg);
+  border: 1px solid var(--status-warning-border);
+  color: var(--badge-conflict-text);
 }
 
 .alert--danger {
-  background: rgba(220, 38, 38, 0.12);
-  border: 1px solid rgba(220, 38, 38, 0.35);
-  color: #f87171;
+  background: var(--badge-delete-bg);
+  border: 1px solid var(--status-danger-border);
+  color: var(--badge-delete-text);
 }
 
 .alert--info {
-  background: rgba(37, 99, 235, 0.12);
-  border: 1px solid rgba(37, 99, 235, 0.35);
-  color: #60a5fa;
+  background: var(--badge-update-bg);
+  border: 1px solid var(--status-info-border);
+  color: var(--badge-update-text);
 }
 
 .alert--success {
-  background: rgba(5, 150, 105, 0.12);
-  border: 1px solid rgba(5, 150, 105, 0.35);
-  color: #34d399;
+  background: var(--badge-success-bg);
+  border: 1px solid var(--status-success-border);
+  color: var(--badge-success-text);
 }
 
 .alert__icon {
@@ -917,8 +934,8 @@
 }
 
 .quick-action-card:hover {
-  border-color: rgba(52, 211, 153, 0.4);
-  background: rgba(52, 211, 153, 0.04);
+  border-color: var(--menu-selected-border);
+  background: var(--accent-wash);
 }
 
 .quick-action-card__icon {
@@ -1191,8 +1208,8 @@
 
 /* ── Identity row highlight (field mapping screen) ────────────────────────── */
 .fm-identity-row {
-  background: rgba(52, 211, 153, 0.06) !important;
-  outline: 1px solid rgba(52, 211, 153, 0.25);
+  background: var(--accent-selected) !important;
+  outline: 1px solid var(--accent-border);
   outline-offset: -1px;
 }
 .fm-identity-row td:first-child {

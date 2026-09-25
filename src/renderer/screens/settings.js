@@ -31,6 +31,9 @@
 
         var settings    = settingsResult || {};
         var connections = (connectionsResult.ok ? connectionsResult.connections : []) || [];
+        var savedTheme  = window.cpilotTheme
+          ? window.cpilotTheme.resolveTheme(settings.theme)
+          : (settings.theme === "light" ? "light" : "dark");
 
         var body = screen.querySelector("#settings-body");
 
@@ -50,29 +53,49 @@
               <div class="form-group">
                 <label class="form-label" for="st-data-dir">Data Directory</label>
                 <input type="text" id="st-data-dir" class="form-input" value="${escHtml(settings.effectiveDataDir || "")}" readonly />
-                <p class="form-hint">Where Sitefinity C-Pilot stores its database, logs, and settings. Set CPILOT_DATA_DIR to override.</p>
+                <p class="form-hint">Database, logs, and settings are stored together in Documents\Sitefinity CPilot. Set CPILOT_DATA_DIR to use a different folder.</p>
               </div>
             </div>
           </div>
 
-          <!-- Appearance -->
+          <!-- Preferences -->
           <div class="form-section">
-            <h3 class="form-section__title">Appearance</h3>
-            <div class="form-group">
-              <label class="form-label" for="st-theme">Theme</label>
-              <select id="st-theme" class="form-select" style="max-width:200px">
-                <option value="system" ${settings.theme === "system" ? "selected" : ""}>System Default</option>
-                <option value="dark"   ${settings.theme === "dark"   ? "selected" : ""}>Dark</option>
-              </select>
-              <p class="form-hint">Currently the app uses a dark theme. Additional themes may be added in future versions.</p>
+            <h3 class="form-section__title">Preferences</h3>
+            <button type="button" class="btn btn-secondary" id="st-preferences-btn" aria-expanded="false" aria-controls="st-preferences-panel">
+              <i class="fa-solid fa-sliders" aria-hidden="true"></i> Preferences
+            </button>
+            <div class="preferences-panel" id="st-preferences-panel" hidden>
+              <div class="form-group">
+                <label class="form-label" for="st-theme">Theme</label>
+                <select id="st-theme" class="form-select" style="max-width:200px">
+                  <option value="dark" ${savedTheme === "dark" ? "selected" : ""}>Dark</option>
+                  <option value="light" ${savedTheme === "light" ? "selected" : ""}>Light</option>
+                </select>
+                <p class="form-hint">Dark is the current look. Light uses the same navy and emerald colors on a light background. Choose a theme, then click Apply.</p>
+              </div>
+              <div class="preferences-panel__actions">
+                <button type="button" class="btn btn-primary" id="st-theme-apply">Apply</button>
+              </div>
             </div>
           </div>
         `;
 
+        var prefsBtn = body.querySelector("#st-preferences-btn");
+        var prefsPanel = body.querySelector("#st-preferences-panel");
         var themeSelect = body.querySelector("#st-theme");
-        on(themeSelect, "change", async function () {
-          await window.cpilot.saveSettings({ theme: themeSelect.value });
-          window.cpilotToast.success("Settings saved.");
+
+        on(prefsBtn, "click", function () {
+          var open = prefsPanel.hasAttribute("hidden");
+          if (open) prefsPanel.removeAttribute("hidden");
+          else prefsPanel.setAttribute("hidden", "");
+          prefsBtn.setAttribute("aria-expanded", open ? "true" : "false");
+        });
+
+        on(body.querySelector("#st-theme-apply"), "click", async function () {
+          var theme = themeSelect.value;
+          await window.cpilot.saveSettings({ theme: theme });
+          if (window.cpilotTheme) window.cpilotTheme.apply(theme);
+          window.cpilotToast.success("Theme applied.");
         });
 
         // Delete connection buttons

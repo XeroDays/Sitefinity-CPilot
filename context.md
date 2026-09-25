@@ -15,18 +15,18 @@
 
 - `L3`  : Read first , Rules of Contextfile
 - `L14` : Index (Line Numbers)
-- `L28` : Overview
+- `L31` : Overview
 - `L39` : Naming
 - `L49` : Startup
-- `L65` : Splash Screen
-- `L73` : Application Layout (new)
-- `L88` : Screens and Router
-- `L115`: IPC
-- `L133`: Services (main process)
-- `L155`: Storage and logging
-- `L165`: Database (SQLite)
-- `L178`: Tests and tooling
-- `L188`: Versioning a new release
+- `L62` : Splash Screen
+- `L69` : Application Layout
+- `L85` : Screens and Router
+- `L123`: IPC
+- `L146`: Services (main process)
+- `L161`: Storage and logging
+- `L167`: Database (SQLite)
+- `L185`: Tests and tooling
+- `L196`: Versioning a new release
 
 ## Overview
 
@@ -43,7 +43,7 @@ Stack: vanilla JavaScript, no bundler. Process split is `src/main`, `src/preload
 - App id: `com.softasium.sitefinity-cpilot`
 - Renderer API: `window.cpilot`
 - IPC prefix: `cpilot:`
-- Data folder: `Documents/Sitefinity C-Pilot`
+- Data folder: `Documents/Sitefinity CPilot`
 - Env overrides: `CPILOT_DATA_DIR`, `CPILOT_USER_DATA_DIR`, `CPILOT_LOG_LEVEL`
 
 ## Startup
@@ -79,7 +79,7 @@ There is no license gate. Closing the last window quits the app on Windows.
 ```
 
 Styles:
-- `src/renderer/styles/app.css`     — base layout, header, sidebar, toast
+- `src/renderer/styles/app.css`     — base layout, header, sidebar, toast; dark tokens on `:root`, light tokens on `[data-theme="light"]`
 - `src/renderer/styles/screens.css` — all screen-specific styles (wizard, forms, tables, badges, etc.)
 
 ## Screens and Router
@@ -115,10 +115,10 @@ Styles:
 - `results.js`       — summary cards, filterable results table, CSV/JSON export, save config
 - `saved-configs.js` — list, run, delete saved configurations
 - `history.js`       — operation history table with details link
-- `settings.js`      — manage connections, theme, data directory
+- `settings.js`      — manage connections, Preferences (Dark / Light theme), data directory
 
 **Script load order** in `index.html`:
-`wizard-state.js` → `toast.js` → `window-controls.js` → `about-modal.js` → all screens → `sidebar.js` → `router.js` (last, triggers initial navigation).
+`theme.js` → `wizard-state.js` → `toast.js` → `window-controls.js` → `about-modal.js` → all screens → `sidebar.js` → `router.js` (last, triggers initial navigation). `theme.js` sets `data-theme` on the document from saved settings (`light`, otherwise dark, including `system`).
 
 ## IPC
 
@@ -160,8 +160,8 @@ IPC handlers are registered in `src/main/ipc/register.js` which imports:
 
 ## Storage and logging
 
-- `src/main/services/app-paths.js` resolves the data directory once per process. Precedence: `CPILOT_DATA_DIR`, then `dataDir` in settings, then `Documents/Sitefinity C-Pilot`.
-- `src/main/services/settings-store.js` reads and writes `settings.json` in the Electron user-data folder (`theme`, `reducedMotion`, `dataDir`).
+- `src/main/services/app-paths.js` resolves the data directory once per process. Precedence: `CPILOT_DATA_DIR`, otherwise `Documents/Sitefinity CPilot`. On startup, `migrateLegacyData()` copies `db` and `Logs` from `Documents/Sitefinity C-Pilot`, and `settings.json` from the Electron user-data folder, when the new files are missing.
+- `src/main/services/settings-store.js` reads and writes `settings.json` inside the data directory (`theme`, `reducedMotion`, `dataDir`). The renderer applies `theme` as `data-theme` on the document.
 - `src/main/services/app-logger.js` and `log-file-store.js` write `Logs/dump.log` under the data directory via `electron-log`. Renderer logs go through `SPLASH_LOG`.
 
 ## Database (SQLite)
@@ -180,7 +180,7 @@ Repositories:
 - `src/main/services/db/config-repository.js` — connections + configurations CRUD
 - `src/main/services/db/operation-repository.js` — operations + items CRUD + getDashboardStats
 
-> **After fresh install:** Run `npm install` to get `better-sqlite3`. If the app fails to load the native module, run `npx electron-rebuild -f -w better-sqlite3`.
+> **After fresh install:** Run `npm install` — the `postinstall` script automatically rebuilds `better-sqlite3` for Electron's Node.js ABI. If a rebuild is ever needed again explicitly, run `npm run rebuild`.
 
 ## Tests and tooling
 

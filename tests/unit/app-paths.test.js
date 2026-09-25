@@ -31,24 +31,56 @@ try {
     delete process.env.CPILOT_DATA_DIR;
     appPaths = freshModule();
     const fallback = appPaths.getDataDir();
-    assert("fallback ends with Sitefinity C-Pilot", path.basename(fallback) === "Sitefinity C-Pilot");
+    assert("fallback ends with Sitefinity CPilot", path.basename(fallback) === "Sitefinity CPilot");
     assert("fallback matches getDefaultDataDir", fallback === appPaths.getDefaultDataDir());
+    assert(
+        "settings.json lives in the data dir",
+        appPaths.settingsFilePath() === path.join(fallback, "settings.json")
+    );
 
-    const settingsFile = appPaths.settingsFilePath();
-    const settingsDir = path.join(tmpRoot, "from-settings");
-    appPaths.ensureDir(path.dirname(settingsFile));
-    fs.writeFileSync(settingsFile, JSON.stringify({ dataDir: settingsDir }), "utf8");
-    appPaths.resetCache();
-    assert("settings.json dataDir is honoured", appPaths.getDataDir() === settingsDir);
+    const migRoot = path.join(tmpRoot, "migrate");
+    const docs = path.join(migRoot, "Documents");
+    const legacy = path.join(docs, "Sitefinity C-Pilot");
+    const target = path.join(migRoot, "Sitefinity CPilot");
+    const legacySettings = path.join(tmpRoot, "userdata", "settings.json");
+    fs.mkdirSync(path.join(legacy, "db"), { recursive: true });
+    fs.writeFileSync(path.join(legacy, "db", "cpilot.db"), "legacy-db");
+    fs.mkdirSync(path.join(legacy, "Logs"), { recursive: true });
+    fs.writeFileSync(path.join(legacy, "Logs", "dump.log"), "legacy-log");
+    fs.mkdirSync(path.dirname(legacySettings), { recursive: true });
+    fs.writeFileSync(legacySettings, "{\"theme\":\"dark\"}");
+    fs.mkdirSync(path.join(target, "db"), { recursive: true });
+    fs.writeFileSync(path.join(target, "db", "cpilot.db"), "existing-db");
 
-    fs.writeFileSync(settingsFile, JSON.stringify({ dataDir: "   " }), "utf8");
-    appPaths.resetCache();
-    assert("blank dataDir falls back to default", appPaths.getDataDir() === appPaths.getDefaultDataDir());
+    appPaths.migrateLegacyData({
+        documentsDir: docs,
+        targetDir: target,
+        legacySettingsFile: legacySettings
+    });
 
-    fs.writeFileSync(settingsFile, "{not json", "utf8");
-    appPaths.resetCache();
-    assert("corrupt settings.json falls back", appPaths.getDataDir() === appPaths.getDefaultDataDir());
-    fs.rmSync(settingsFile, { force: true });
+    assert(
+        "does not overwrite an existing database",
+        fs.readFileSync(path.join(target, "db", "cpilot.db"), "utf8") === "existing-db"
+    );
+    assert(
+        "copies a missing log",
+        fs.readFileSync(path.join(target, "Logs", "dump.log"), "utf8") === "legacy-log"
+    );
+    assert(
+        "copies settings when the new file is missing",
+        fs.readFileSync(path.join(target, "settings.json"), "utf8") === "{\"theme\":\"dark\"}"
+    );
+
+    fs.writeFileSync(path.join(target, "settings.json"), "{\"theme\":\"light\"}");
+    appPaths.migrateLegacyData({
+        documentsDir: docs,
+        targetDir: target,
+        legacySettingsFile: legacySettings
+    });
+    assert(
+        "does not overwrite existing settings",
+        fs.readFileSync(path.join(target, "settings.json"), "utf8") === "{\"theme\":\"light\"}"
+    );
 
     process.env.CPILOT_DATA_DIR = path.join(tmpRoot, "scratch");
     appPaths = freshModule();

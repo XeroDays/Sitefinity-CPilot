@@ -13,7 +13,7 @@ npm install
 npm start
 ```
 
-On first launch the app creates a data folder under Documents named `Sitefinity C-Pilot`.
+On first launch the app creates a data folder under Documents named `Sitefinity CPilot`. The database, logs, and settings are stored there.
 
 ## Scripts
 

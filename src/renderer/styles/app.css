@@ -19,7 +19,8 @@ body {
   color: var(--text-primary);
 }
 
-:root {
+:root,
+[data-theme="dark"] {
   --topbar-height: 48px;
   --sidebar-width: 220px;
 
@@ -31,6 +32,8 @@ body {
   --bg-menu: #1a2332;
   --bg-sidebar: #0d0e10;
   --bg-input: #12171e;
+  --bg-log: #050810;
+  --select-option-bg: #1a2332;
 
   /* text */
   --text-primary: #e7ecf3;
@@ -45,9 +48,17 @@ body {
 
   /* interactive */
   --hover-wash: rgba(255, 255, 255, 0.08);
+  --row-hover: rgba(255, 255, 255, 0.03);
   --accent: #34d399;
+  --accent-hover: #2dc98c;
   --accent-dim: rgba(52, 211, 153, 0.15);
   --accent-text: #0b0b0d;
+  --accent-ring: rgba(52, 211, 153, 0.2);
+  --accent-border: rgba(52, 211, 153, 0.35);
+  --accent-wash: rgba(52, 211, 153, 0.05);
+  --accent-selected: rgba(52, 211, 153, 0.06);
+  --menu-selected-bg: #12241c;
+  --menu-selected-border: rgba(52, 211, 153, 0.45);
 
   /* status badges */
   --badge-create-bg: rgba(5, 150, 105, 0.18);
@@ -67,10 +78,99 @@ body {
   --badge-error-bg: rgba(220, 38, 38, 0.18);
   --badge-error-text: #f87171;
 
+  /* status borders and danger buttons */
+  --status-success-border: rgba(5, 150, 105, 0.35);
+  --status-warning-border: rgba(217, 119, 6, 0.35);
+  --status-danger-border: rgba(220, 38, 38, 0.35);
+  --status-info-border: rgba(37, 99, 235, 0.35);
+  --danger-bg: rgba(220, 38, 38, 0.15);
+  --danger-bg-hover: rgba(220, 38, 38, 0.25);
+
+  /* log lines */
+  --log-success: #34d399;
+  --log-error: #f87171;
+  --log-warn: #fbbf24;
+  --log-info: #60a5fa;
+
+  /* overlays */
+  --overlay: rgba(0, 0, 0, 0.55);
+  --drawer-overlay: rgba(0, 0, 0, 0.45);
+  --shadow-toast: 0 4px 24px rgba(0, 0, 0, 0.5);
+
   /* scrollbar */
   --scrollbar-size: 8px;
   --scrollbar-thumb: rgba(52, 211, 153, 0.45);
   --scrollbar-track: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="light"] {
+  --bg-app: #f3f5f8;
+  --bg-chrome: #ffffff;
+  --bg-card: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-menu: #ffffff;
+  --bg-sidebar: #eef2f6;
+  --bg-input: #f7f9fb;
+  --bg-log: #f8fafc;
+  --select-option-bg: #ffffff;
+
+  --text-primary: #1a2332;
+  --text-strong: #0b0b0d;
+  --text-muted: #5c6b7e;
+  --text-faint: #8b97a8;
+
+  --border-subtle: rgba(26, 35, 50, 0.08);
+  --border-strong: rgba(26, 35, 50, 0.14);
+  --border-input: rgba(26, 35, 50, 0.18);
+
+  --hover-wash: rgba(26, 35, 50, 0.06);
+  --row-hover: rgba(26, 35, 50, 0.04);
+  --accent: #059669;
+  --accent-hover: #047857;
+  --accent-dim: rgba(5, 150, 105, 0.12);
+  --accent-text: #ffffff;
+  --accent-ring: rgba(5, 150, 105, 0.22);
+  --accent-border: rgba(5, 150, 105, 0.35);
+  --accent-wash: rgba(5, 150, 105, 0.08);
+  --accent-selected: rgba(5, 150, 105, 0.1);
+  --menu-selected-bg: #ecfdf5;
+  --menu-selected-border: rgba(5, 150, 105, 0.45);
+
+  --badge-create-bg: rgba(5, 150, 105, 0.12);
+  --badge-create-text: #047857;
+  --badge-update-bg: rgba(37, 99, 235, 0.12);
+  --badge-update-text: #1d4ed8;
+  --badge-skip-bg: rgba(107, 114, 128, 0.12);
+  --badge-skip-text: #4b5563;
+  --badge-delete-bg: rgba(220, 38, 38, 0.12);
+  --badge-delete-text: #b91c1c;
+  --badge-conflict-bg: rgba(217, 119, 6, 0.14);
+  --badge-conflict-text: #b45309;
+  --badge-unchanged-bg: rgba(107, 114, 128, 0.1);
+  --badge-unchanged-text: #6b7280;
+  --badge-success-bg: rgba(5, 150, 105, 0.12);
+  --badge-success-text: #047857;
+  --badge-error-bg: rgba(220, 38, 38, 0.12);
+  --badge-error-text: #b91c1c;
+
+  --status-success-border: rgba(5, 150, 105, 0.4);
+  --status-warning-border: rgba(180, 83, 9, 0.4);
+  --status-danger-border: rgba(185, 28, 28, 0.4);
+  --status-info-border: rgba(29, 78, 216, 0.35);
+  --danger-bg: rgba(220, 38, 38, 0.1);
+  --danger-bg-hover: rgba(220, 38, 38, 0.16);
+
+  --log-success: #047857;
+  --log-error: #b91c1c;
+  --log-warn: #b45309;
+  --log-info: #1d4ed8;
+
+  --overlay: rgba(15, 23, 32, 0.4);
+  --drawer-overlay: rgba(15, 23, 32, 0.32);
+  --shadow-toast: 0 4px 24px rgba(26, 35, 50, 0.12);
+
+  --scrollbar-thumb: rgba(5, 150, 105, 0.45);
+  --scrollbar-track: rgba(26, 35, 50, 0.08);
 }
 
 /* ── App Layout ────────────────────────────────────────────────────────────── */
@@ -270,8 +370,8 @@ body {
 
 .menu-item:hover,
 .menu-item.is-selected {
-  border-color: rgba(52, 211, 153, 0.45);
-  background: #12241c;
+  border-color: var(--menu-selected-border);
+  background: var(--menu-selected-bg);
 }
 
 .menu-item__index {
@@ -319,7 +419,7 @@ body {
 .modal-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: var(--overlay);
 }
 
 .modal-content {
@@ -485,7 +585,7 @@ body {
   background: var(--bg-elevated);
   border: 1px solid var(--border-strong);
   border-radius: 10px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-toast);
   pointer-events: all;
   opacity: 0;
   transform: translateY(8px);

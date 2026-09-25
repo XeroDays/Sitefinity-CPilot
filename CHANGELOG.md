@@ -20,6 +20,16 @@ The version must match the `"version"` field in `package.json`.
 ### Added
 
 - Identity field picker in Field Mapping: a new Identity radio-button column lets users designate any mapped Sitefinity field as the matching key directly on the Field Mapping screen; auto-selects the best candidate (prefers existing key → id-like field name → first mapped field); blocks "Next" and shows an alert when no identity is selected; persists the choice to Sync Settings which now shows a hint that the value was set in Field Mapping
+- Settings Preferences: a theme dropdown (Dark or Light) with an Apply button that switches the app appearance immediately and keeps the choice for the next launch
+
+### Changed
+
+- Database, logs, and settings are stored together in Documents\Sitefinity CPilot. On startup, files already written under Documents\Sitefinity C-Pilot or in the Electron user-data folder are copied into the new folder when the destination file is missing.
+
+### Fixed
+
+- Database not initialised errors caused by `better-sqlite3` being compiled against the system Node.js ABI (v127) instead of Electron 41's embedded Node.js ABI (v145); wired `electron-rebuild -f -w better-sqlite3` into the `postinstall` npm script and added a standalone `rebuild` script
+- Startup now shows an actionable error dialog when the native database module fails to load, instead of silently continuing and producing cryptic IPC errors throughout the session
 - Dashboard screen with operation stats, quick-action cards, and recent operations table
 - Connection screen: enter Sitefinity API endpoint, test connection, discover module fields, save connections
 - JSON Source screen: upload JSON files (drag-and-drop or file picker), paste JSON, auto-detect record arrays, show record count and field preview
