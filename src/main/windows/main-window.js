@@ -27,8 +27,12 @@ function createMainWindow() {
     webPreferences: {
       preload: path.join(__dirname, "../../preload/index.js"),
       contextIsolation: true,
+      // Sitefinity responses omit CORS headers for the file:// page.
+      // Requests are issued with fetch in this window so they show in DevTools.
+      webSecurity: false,
     },
   });
+  win.cpilotIsMain = true;
 
   if (process.platform === "win32" && icon) {
     win.setIcon(icon);

@@ -24,10 +24,12 @@ The version must match the `"version"` field in `package.json`.
 
 ### Changed
 
+- Sitefinity API calls (test connection, compare, and execute) appear in the DevTools Network tab
 - Database, logs, and settings are stored together in Documents\Sitefinity CPilot. On startup, files already written under Documents\Sitefinity C-Pilot or in the Electron user-data folder are copied into the new folder when the destination file is missing.
 
 ### Fixed
 
+- Test Connection failed with "Failed to fetch" and showed nothing in the DevTools Network tab, because the page blocked connections to Sitefinity. Those API calls are now allowed.
 - Database failed to initialise because `better-sqlite3` 9.x could not compile for Electron 41 (C++20 required). The app now uses `better-sqlite3` 12.11 or newer, which builds for Electron's native module and loads on startup.
 - Startup now shows an actionable error dialog when the native database module fails to load, instead of silently continuing and producing cryptic IPC errors throughout the session
 - Dashboard screen with operation stats, quick-action cards, and recent operations table

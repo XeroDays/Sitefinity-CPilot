@@ -32,6 +32,8 @@ module.exports = {
   EXECUTE_SYNC:           "cpilot:execute-sync",
   CANCEL_SYNC:            "cpilot:cancel-sync",
   SYNC_PROGRESS:          "cpilot:sync-progress",   // main → renderer push
+  RENDERER_FETCH:         "cpilot:renderer-fetch",  // main → renderer
+  RENDERER_FETCH_RESULT:  "cpilot:renderer-fetch-result", // renderer → main
 
   // ── Saved Sitefinity Connections ──────────────────────────────────────────
   LIST_CONNECTIONS:       "cpilot:list-connections",

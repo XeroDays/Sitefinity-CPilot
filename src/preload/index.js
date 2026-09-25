@@ -32,6 +32,8 @@ const CH = {
   EXECUTE_SYNC:          "cpilot:execute-sync",
   CANCEL_SYNC:           "cpilot:cancel-sync",
   SYNC_PROGRESS:         "cpilot:sync-progress",
+  RENDERER_FETCH:        "cpilot:renderer-fetch",
+  RENDERER_FETCH_RESULT: "cpilot:renderer-fetch-result",
 
   // ── Saved Connections ─────────────────────────────────────────────────────
   LIST_CONNECTIONS:      "cpilot:list-connections",
@@ -50,6 +52,43 @@ const CH = {
   GET_OPERATION_ITEMS:   "cpilot:get-operation-items",
   GET_DASHBOARD_STATS:   "cpilot:get-dashboard-stats",
 };
+
+ipcRenderer.on(CH.RENDERER_FETCH, async (_event, payload) => {
+  const id = payload && payload.id;
+  try {
+    const method = (payload && payload.method) || "GET";
+    const headers = (payload && payload.headers) || {};
+    const init = {
+      method,
+      headers,
+      redirect: "manual",
+      credentials: (payload && payload.credentials) || "omit",
+      signal: AbortSignal.timeout(payload && payload.timeout ? payload.timeout : 30000),
+    };
+    if (payload && payload.body != null && method !== "GET" && method !== "HEAD") {
+      init.body = payload.body;
+    }
+    const res = await fetch(payload.url, init);
+    const headerMap = {};
+    res.headers.forEach((value, key) => {
+      headerMap[key] = value;
+    });
+    const body = await res.text();
+    ipcRenderer.send(CH.RENDERER_FETCH_RESULT, {
+      id,
+      ok: true,
+      status: res.status,
+      headers: headerMap,
+      body,
+    });
+  } catch (err) {
+    ipcRenderer.send(CH.RENDERER_FETCH_RESULT, {
+      id,
+      ok: false,
+      error: err && err.message ? err.message : "Request failed",
+    });
+  }
+});
 
 contextBridge.exposeInMainWorld("cpilot", {
   // ── Core ──────────────────────────────────────────────────────────────────

@@ -1,7 +1,9 @@
 /**
  * sitefinity-client.js — HTTP client for Sitefinity Dynamic Module REST API.
  *
- * Uses Node.js built-in `https` and `http` modules only (no third-party deps).
+ * Each request is performed with fetch in the main window so it appears in
+ * DevTools. URL checks stay in this process. Cookie auth uses the window
+ * session cookie jar because fetch cannot set a Cookie header.
  * All public methods are async and return plain JS objects / arrays.
  *
  * Supported auth methods:
@@ -12,9 +14,10 @@
 
 "use strict";
 
-const https = require("https");
-const http  = require("http");
-const url   = require("url");
+const crypto = require("crypto");
+const { BrowserWindow, ipcMain } = require("electron");
+const url = require("url");
+const channels = require("../../shared/ipc/channels");
 
 const DEFAULT_PAGE_SIZE = 100;
 const REQUEST_TIMEOUT_MS = 30_000;
@@ -53,54 +56,155 @@ function validateUrl(rawUrl) {
  * @param {string|null} [opts.body]
  * @param {number} [opts.timeout]
  */
+const pendingFetches = new Map();
+let fetchListenerReady = false;
+
+function ensureFetchListener() {
+  if (fetchListenerReady) return;
+  fetchListenerReady = true;
+  ipcMain.on(channels.RENDERER_FETCH_RESULT, function (_event, msg) {
+    if (!msg || !pendingFetches.has(msg.id)) return;
+    const waiter = pendingFetches.get(msg.id);
+    pendingFetches.delete(msg.id);
+    if (msg.ok) {
+      waiter.resolve({ status: msg.status, headers: msg.headers || {}, body: msg.body || "" });
+    } else {
+      waiter.reject(new Error(msg.error || "Request failed"));
+    }
+  });
+}
+
+function installCookieCapture(win) {
+  const ses = win.webContents.session;
+  if (ses.__cpilotCookieCapture) return;
+  ses.__cpilotCookieCapture = true;
+  ses.webRequest.onHeadersReceived(
+    { urls: ["http://*/*", "https://*/*"] },
+    function (details, callback) {
+      const headers = details.responseHeaders || {};
+      const raw = headers["set-cookie"] || headers["Set-Cookie"] || [];
+      const list = Array.isArray(raw) ? raw : [raw];
+      const jobs = [];
+      for (let i = 0; i < list.length; i++) {
+        if (!list[i]) continue;
+        const pair = String(list[i]).split(";")[0];
+        const eq = pair.indexOf("=");
+        if (eq <= 0) continue;
+        jobs.push(ses.cookies.set({
+          url: details.url,
+          name: pair.slice(0, eq).trim(),
+          value: pair.slice(eq + 1).trim(),
+          path: "/",
+        }));
+      }
+      Promise.all(jobs).then(function () {
+        callback({ responseHeaders: headers });
+      }).catch(function () {
+        callback({ responseHeaders: headers });
+      });
+    }
+  );
+}
+
+function getMainWindow() {
+  const win = BrowserWindow.getAllWindows().find(function (candidate) {
+    return candidate.cpilotIsMain && !candidate.isDestroyed() && !candidate.webContents.isDestroyed();
+  });
+  if (!win) {
+    throw new Error("Main window is not available to send the API request.");
+  }
+  return win;
+}
+
+async function applyCookieJar(win, targetUrl, cookieHeader) {
+  const parts = String(cookieHeader).split(";");
+  for (let i = 0; i < parts.length; i++) {
+    const trimmed = parts[i].trim();
+    if (!trimmed) continue;
+    const eq = trimmed.indexOf("=");
+    if (eq <= 0) continue;
+    await win.webContents.session.cookies.set({
+      url: targetUrl,
+      name: trimmed.slice(0, eq).trim(),
+      value: trimmed.slice(eq + 1).trim(),
+      path: "/",
+    });
+  }
+}
+
+async function readCookieHeader(targetUrl) {
+  const win = getMainWindow();
+  const cookies = await win.webContents.session.cookies.get({ url: targetUrl });
+  return cookies.map(function (cookie) {
+    return cookie.name + "=" + cookie.value;
+  }).join("; ");
+}
+
 function request(opts) {
-  return new Promise(function (resolve, reject) {
-    var parsed;
-    try {
-      parsed = new url.URL(opts.url);
-    } catch (e) {
-      return reject(new Error("Invalid URL: " + opts.url));
-    }
+  const validation = validateUrl(opts.url);
+  if (!validation.valid) {
+    return Promise.reject(new Error(validation.error));
+  }
 
-    var isHttps = parsed.protocol === "https:";
-    var transport = isHttps ? https : http;
-    var timeout = opts.timeout || REQUEST_TIMEOUT_MS;
+  ensureFetchListener();
+  let win;
+  try {
+    win = getMainWindow();
+  } catch (err) {
+    return Promise.reject(err);
+  }
+  installCookieCapture(win);
 
-    var reqOpts = {
-      method: opts.method || "GET",
-      hostname: parsed.hostname,
-      port: parsed.port || (isHttps ? 443 : 80),
-      path: parsed.pathname + (parsed.search || ""),
-      headers: Object.assign({ "User-Agent": "SitefintyCPilot/1.0" }, opts.headers || {}),
-    };
+  const timeout = opts.timeout || REQUEST_TIMEOUT_MS;
+  const headers = Object.assign({}, opts.headers || {});
+  const cookieHeader = headers.Cookie || headers.cookie;
+  delete headers.Cookie;
+  delete headers.cookie;
 
-    if (opts.body) {
-      reqOpts.headers["Content-Length"] = Buffer.byteLength(opts.body);
-    }
+  const id = crypto.randomUUID();
+  const credentials = (cookieHeader || opts.storeCookies) ? "include" : "omit";
 
-    var req = transport.request(reqOpts, function (res) {
-      var chunks = [];
-      res.on("data", function (chunk) { chunks.push(chunk); });
-      res.on("end", function () {
-        resolve({
-          status: res.statusCode,
-          headers: res.headers,
-          body: Buffer.concat(chunks).toString("utf8"),
-        });
+  const send = function () {
+    return new Promise(function (resolve, reject) {
+      const timer = setTimeout(function () {
+        pendingFetches.delete(id);
+        reject(new Error("Request timed out after " + timeout + "ms"));
+      }, timeout + 1000);
+
+      pendingFetches.set(id, {
+        resolve: function (value) {
+          clearTimeout(timer);
+          resolve(value);
+        },
+        reject: function (err) {
+          clearTimeout(timer);
+          reject(err);
+        },
+      });
+
+      if (win.isDestroyed() || win.webContents.isDestroyed()) {
+        clearTimeout(timer);
+        pendingFetches.delete(id);
+        reject(new Error("Main window is not available to send the API request."));
+        return;
+      }
+
+      win.webContents.send(channels.RENDERER_FETCH, {
+        id: id,
+        method: opts.method || "GET",
+        url: opts.url,
+        headers: headers,
+        body: opts.body == null ? null : opts.body,
+        timeout: timeout,
+        credentials: credentials,
       });
     });
+  };
 
-    req.setTimeout(timeout, function () {
-      req.destroy(new Error("Request timed out after " + timeout + "ms"));
-    });
-
-    req.on("error", reject);
-
-    if (opts.body) {
-      req.write(opts.body);
-    }
-    req.end();
-  });
+  const prepared = cookieHeader
+    ? applyCookieJar(win, opts.url, cookieHeader).then(send)
+    : send();
+  return prepared;
 }
 
 // ── Auth headers ───────────────────────────────────────────────────────────
@@ -120,7 +224,7 @@ function buildAuthHeaders(authType, credentials) {
 
 /**
  * Perform Sitefinity form-based login.
- * Returns the Set-Cookie value on success.
+ * Returns the session cookie string on success.
  * @param {string} baseUrl
  * @param {string} username
  * @param {string} password
@@ -139,15 +243,18 @@ async function loginWithForm(baseUrl, username, password) {
       "Content-Type": "application/x-www-form-urlencoded",
     },
     body,
+    storeCookies: true,
   });
 
-  const setCookie = res.headers["set-cookie"];
-  if (!setCookie || res.status >= 400) {
+  if (res.status >= 400) {
     throw new Error("Form login failed (HTTP " + res.status + "). Check credentials.");
   }
 
-  // Return the cookie string
-  return Array.isArray(setCookie) ? setCookie.map(function (c) { return c.split(";")[0]; }).join("; ") : setCookie;
+  const cookie = await readCookieHeader(loginUrl);
+  if (!cookie) {
+    throw new Error("Form login failed (HTTP " + res.status + "). Check credentials.");
+  }
+  return cookie;
 }
 
 // ── Fetch a page of records ─────────────────────────────────────────────────

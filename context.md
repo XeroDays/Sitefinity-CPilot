@@ -134,7 +134,7 @@ Channel names live in `src/shared/ipc/channels.js`. Preload (`src/preload/index.
 
 **JSON**: PARSE_JSON, GET_FIELD_SUGGESTIONS.
 
-**Sync**: COMPARE_DATA, EXECUTE_SYNC, CANCEL_SYNC; SYNC_PROGRESS (main→renderer push).
+**Sync**: COMPARE_DATA, EXECUTE_SYNC, CANCEL_SYNC; SYNC_PROGRESS (main→renderer push). RENDERER_FETCH (main→renderer) and RENDERER_FETCH_RESULT (renderer→main) carry each Sitefinity HTTP call. They are not exposed on `window.cpilot`.
 
 **Connections CRUD**: LIST_CONNECTIONS, SAVE_CONNECTION, DELETE_CONNECTION.
 
@@ -151,7 +151,7 @@ IPC handlers are registered in `src/main/ipc/register.js` which imports:
 
 | File | Purpose |
 |------|---------|
-| `sitefinity-client.js`  | Node.js https HTTP wrapper; testConnection, fetchAllRecords, createItem, updateItem, deleteItem; Basic/Cookie auth; OData pagination |
+| `sitefinity-client.js`  | Sitefinity HTTP client. Calls run as `fetch` in the main window (so they show in DevTools) after main-process URL checks. Basic auth sends `Authorization`. Cookie auth uses the window session cookie jar. testConnection, fetchAllRecords, createItem, updateItem, deleteItem; OData pagination |
 | `json-parser.js`        | Parse, validate, detect root type, infer field types, find duplicates |
 | `field-mapper.js`       | autoMap (exact + case-insensitive), applyMappings, getMatchingKeyValue, validateMappings |
 | `comparison-engine.js`  | compare() — normalise, index existing, classify each source record, detect missing |

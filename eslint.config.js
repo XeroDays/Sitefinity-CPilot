@@ -52,7 +52,20 @@ module.exports = [
         ]
     },
     {
-        files: ["src/main/**/*.js", "src/preload/**/*.js", "scripts/**/*.js"],
+        files: ["src/preload/**/*.js"],
+        languageOptions: {
+            ecmaVersion: 2023,
+            sourceType: "commonjs",
+            globals: {
+                ...NODE_GLOBALS,
+                fetch: "readonly",
+                AbortSignal: "readonly",
+            }
+        },
+        rules: BASE_RULES
+    },
+    {
+        files: ["src/main/**/*.js", "scripts/**/*.js"],
         languageOptions: {
             ecmaVersion: 2023,
             sourceType: "commonjs",
