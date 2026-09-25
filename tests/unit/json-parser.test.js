@@ -75,6 +75,97 @@ test("respects forced record path", function () {
   assert.strictEqual(r.recordPath, "b");
 });
 
+test("null forced path still auto-detects", function () {
+  var json = JSON.stringify({ items: [{ ExternalId: "X1", Title: "One" }] });
+  var r = jsonParser.parseJson(json, null);
+  assert.strictEqual(r.ok, true);
+  assert.strictEqual(r.recordPath, "items");
+  assert.strictEqual(r.totalRecords, 1);
+});
+
+test("detects array under arbitrary top-level key", function () {
+  var json = JSON.stringify({
+    Sitefinity: [
+      { Code: "US", Country: "United States" },
+      { Code: "CA", Country: "Canada" },
+    ],
+  });
+  var r = jsonParser.parseJson(json);
+  assert.strictEqual(r.ok, true);
+  assert.strictEqual(r.recordPath, "Sitefinity");
+  assert.strictEqual(r.totalRecords, 2);
+  assert.strictEqual(r.detectedFields.length, 2);
+});
+
+test("detects array nested under parent then child", function () {
+  var json = JSON.stringify({
+    test: {
+      items: [
+        { question: "Q1", answer: "A1" },
+        { question: "Q2", answer: "A2" },
+      ],
+    },
+  });
+  var r = jsonParser.parseJson(json);
+  assert.strictEqual(r.ok, true);
+  assert.strictEqual(r.recordPath, "test.items");
+  assert.strictEqual(r.totalRecords, 2);
+});
+
+test("detects array under nested parent object with arbitrary key", function () {
+  var json = JSON.stringify({
+    container: {
+      MobileFaqs: [
+        { question: "Q1", answer: "A1" },
+        { question: "Q2", answer: "A2" },
+        { question: "Q3", answer: "A3" },
+      ],
+    },
+  });
+  var r = jsonParser.parseJson(json);
+  assert.strictEqual(r.ok, true);
+  assert.strictEqual(r.recordPath, "container.MobileFaqs");
+  assert.strictEqual(r.totalRecords, 3);
+});
+
+test("prefers item collection over nested field arrays inside records", function () {
+  var json = JSON.stringify({
+    value: [
+      { Id: "1", Title: "One", Tags: [{ name: "a" }, { name: "b" }] },
+      { Id: "2", Title: "Two", Tags: [{ name: "c" }] },
+    ],
+  });
+  var r = jsonParser.parseJson(json);
+  assert.strictEqual(r.ok, true);
+  assert.strictEqual(r.recordPath, "value");
+  assert.strictEqual(r.totalRecords, 2);
+});
+
+test("prefers richer item list when multiple arrays exist", function () {
+  var json = JSON.stringify({
+    meta: [{ note: "x" }],
+    payload: {
+      rows: [
+        { ExternalId: "1", Title: "A", Active: true },
+        { ExternalId: "2", Title: "B", Active: false },
+        { ExternalId: "3", Title: "C", Active: true },
+      ],
+    },
+  });
+  var r = jsonParser.parseJson(json);
+  assert.strictEqual(r.ok, true);
+  assert.strictEqual(r.recordPath, "payload.rows");
+  assert.strictEqual(r.totalRecords, 3);
+});
+
+test("treats single root object record as one item", function () {
+  var json = JSON.stringify({ ExternalId: "solo", Title: "Only one", Active: true });
+  var r = jsonParser.parseJson(json);
+  assert.strictEqual(r.ok, true);
+  assert.strictEqual(r.totalRecords, 1);
+  assert.strictEqual(r.records[0].ExternalId, "solo");
+});
+
 // ── inferFields ────────────────────────────────────────────────────────────
 
 test("infers field types correctly", function () {

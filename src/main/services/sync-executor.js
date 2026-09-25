@@ -153,7 +153,10 @@ async function execute(opts, onProgress) {
     completedAt: Date.now(),
   });
 
-  emit({ message: "Operation " + finalStatus + ". Created: " + counters.created + ", Updated: " + counters.updated + ", Deleted: " + counters.deleted + ", Failed: " + counters.failed + "." });
+  emit({
+    message: "Operation " + finalStatus + ". Created: " + counters.created + ", Updated: " + counters.updated + ", Deleted: " + counters.deleted + ", Failed: " + counters.failed + ".",
+    level: counters.failed > 0 ? "error" : "success",
+  });
 
   return {
     operationId: opRecord.id,

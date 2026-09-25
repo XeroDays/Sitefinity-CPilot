@@ -10,7 +10,7 @@
     render: function (container) {
       container.innerHTML = "";
       var screen = document.createElement("div");
-      screen.className = "cpilot-screen";
+      screen.className = "cpilot-screen cpilot-screen--history";
       container.appendChild(screen);
 
       screen.innerHTML = `

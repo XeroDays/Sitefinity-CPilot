@@ -16,7 +16,6 @@ const channels            = require("../../shared/ipc/channels");
 const sfClient            = require("../services/sitefinity-client");
 const configRepo          = require("../services/db/config-repository");
 const { ipc: log }        = require("../services/app-logger");
-const { safeStorage }     = require("electron");
 
 // ── Register ───────────────────────────────────────────────────────────────
 function registerConnectionHandlers() {
@@ -30,7 +29,7 @@ function registerConnectionHandlers() {
         baseUrl:     opts.baseUrl || opts.apiEndpoint,
         authType:    opts.authType || "none",
         username:    opts.username || "",
-        password:    decryptPassword(opts.encryptedPassword) || opts.password || "",
+        password:    opts.password || "",
         cookie:      opts.cookie || "",
         accessKey:   opts.accessKey || "",
       });
@@ -50,7 +49,7 @@ function registerConnectionHandlers() {
         baseUrl:     opts.baseUrl || opts.apiEndpoint,
         authType:    opts.authType || "none",
         username:    opts.username || "",
-        password:    decryptPassword(opts.encryptedPassword) || opts.password || "",
+        password:    opts.password || "",
         cookie:      opts.cookie || "",
         accessKey:   opts.accessKey || "",
         pageSize:    opts.pageSize || 100,
@@ -77,27 +76,16 @@ function registerConnectionHandlers() {
   });
 
   // ── Save Connection ────────────────────────────────────────────────────
+  // Persists name, endpoint, and auth type only — never passwords, access keys,
+  // cookies, or other secrets. Callers may still send those fields; they are ignored.
   ipcMain.handle(channels.SAVE_CONNECTION, async (_event, data) => {
     try {
-      // Encrypt password before storing a credential reference
-      var credRef = null;
-      var secret = data.authType === "accessKey" ? data.accessKey : data.password;
-      if (secret) {
-        try {
-          var encrypted = safeStorage.encryptString(secret).toString("base64");
-          credRef = "safe:" + encrypted;
-        } catch {
-          // safeStorage unavailable in test environments — skip
-          credRef = null;
-        }
-      }
       const saved = configRepo.saveConnection({
-        id:           data.id,
-        name:         data.name,
-        baseUrl:      data.baseUrl,
-        apiEndpoint:  data.apiEndpoint,
-        authType:     data.authType || "none",
-        credentialRef: credRef,
+        id:          data.id,
+        name:        data.name,
+        baseUrl:     data.baseUrl,
+        apiEndpoint: data.apiEndpoint,
+        authType:    data.authType || "none",
       });
       return { ok: true, connection: saved };
     } catch (err) {
@@ -116,15 +104,4 @@ function registerConnectionHandlers() {
   });
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────
-function decryptPassword(encryptedB64) {
-  if (!encryptedB64 || !encryptedB64.startsWith("safe:")) return "";
-  try {
-    var buf = Buffer.from(encryptedB64.slice(5), "base64");
-    return safeStorage.decryptString(buf);
-  } catch {
-    return "";
-  }
-}
-
-module.exports = { registerConnectionHandlers, decryptPassword };
+module.exports = { registerConnectionHandlers };

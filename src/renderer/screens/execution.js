@@ -81,9 +81,27 @@
         if (el) el.textContent = String(val || 0);
       }
 
+      function inferLogLevel(message, explicitLevel) {
+        if (explicitLevel) return explicitLevel;
+        var msg = String(message || "");
+        var failedMatch = msg.match(/Failed:\s*(\d+)/i);
+        if (failedMatch) {
+          return parseInt(failedMatch[1], 10) > 0 ? "error" : "success";
+        }
+        var lower = msg.toLowerCase();
+        if (lower.includes("fail")) return "error";
+        if (lower.includes("cancel")) return "warn";
+        return "success";
+      }
+
       function appendLog(message, level) {
         var p = document.createElement("p");
-        p.className = "log-entry" + (level ? " log-entry--" + level : "");
+        var classes = "log-entry" + (level ? " log-entry--" + level : "");
+        // Bold green only for the final operation summary when there were no failures.
+        if (level === "success" && /^Operation (completed|cancelled|partial)\./i.test(String(message || ""))) {
+          classes += " log-entry--summary";
+        }
+        p.className = classes;
         var ts = new Date().toLocaleTimeString();
         p.textContent = "[" + ts + "] " + (message || "");
         logEl.appendChild(p);
@@ -119,7 +137,7 @@
         progPct.textContent  = pct + "%";
 
         if (data.message) {
-          var level = data.level || (data.message.toLowerCase().includes("fail") ? "error" : (data.message.toLowerCase().includes("cancel") ? "warn" : "success"));
+          var level = inferLogLevel(data.message, data.level);
           if (data.message.includes("Processing")) level = "info";
           appendLog(data.message, level);
         }

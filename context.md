@@ -25,8 +25,8 @@
 - `L148`: Services (main process)
 - `L163`: Storage and logging
 - `L169`: Database (SQLite)
-- `L187`: Tests and tooling
-- `L198`: Versioning a new release
+- `L189`: Tests and tooling
+- `L200`: Versioning a new release
 
 ## Overview
 
@@ -34,7 +34,7 @@ Sitefinity C-Pilot is an Electron desktop app for Sitefinity CMS developers. The
 
 This is the full application with a 12-screen wizard workflow for JSON-driven Sitefinity Dynamic Module synchronisation.
 
-Stack: vanilla JavaScript, no bundler. Process split is `src/main`, `src/preload`, `src/renderer`, and `src/shared`. Current version is `0.1.0` in `package.json`.
+Stack: vanilla JavaScript, no bundler. Process split is `src/main`, `src/preload`, `src/renderer`, and `src/shared`. Current version is `1.0.0` in `package.json`.
 
 ## Naming
 
@@ -107,7 +107,7 @@ The gear menu Preferences item opens the Settings screen. That screen shows the 
 
 **Screens** (in `src/renderer/screens/`):
 - `dashboard.js`     — stats cards, quick actions, recent operations table
-- `connection.js`    — API endpoint entry, test connection, auth config (None, Basic, Session / Cookie, Access Key), save connection
+- `connection.js`    — API endpoint entry, test connection, auth config (None, Basic, Session / Cookie, Access Key); save connection stores name/endpoint/auth type only
 - `json-source.js`   — file upload / paste, auto-parse, record path selection
 - `field-mapping.js` — mapping table with auto-suggestions and manual overrides
 - `sync-settings.js` — matching key, sync mode radio cards, deletion config, advanced options
@@ -152,7 +152,7 @@ IPC handlers are registered in `src/main/ipc/register.js` which imports:
 | File | Purpose |
 |------|---------|
 | `sitefinity-client.js`  | Sitefinity HTTP client. Calls run as `fetch` in the main window (so they show in DevTools) after main-process URL checks. Basic auth sends `Authorization`. Cookie auth uses the window session cookie jar. testConnection, fetchAllRecords, createItem, updateItem, deleteItem; OData pagination |
-| `json-parser.js`        | Parse, validate, detect root type, infer field types, find duplicates |
+| `json-parser.js`        | Parse, validate, detect root type, infer field types, find duplicates. Item detection walks nested objects and scores candidate arrays (any property name, any depth); nested object fields on an item are not treated as separate item lists |
 | `field-mapper.js`       | autoMap (exact + case-insensitive), applyMappings, getMatchingKeyValue, validateMappings |
 | `comparison-engine.js`  | compare() — normalise, index existing, classify each source record, detect missing |
 | `sync-executor.js`      | Sequential API execution with IPC progress events; cancel support; DB persistence |
@@ -171,7 +171,7 @@ IPC handlers are registered in `src/main/ipc/register.js` which imports:
 Uses `better-sqlite3` (synchronous API). Database file: `{dataDir}/db/cpilot.db`.
 
 **Tables:**
-- `sync_connections` — saved Sitefinity connection configs (passwords stored via `safeStorage`, not plain text)
+- `sync_connections` — saved Sitefinity connection configs (name, endpoint, auth type only; auth secrets are never stored)
 - `sync_configurations` — saved sync configurations (field mappings, settings as JSON columns)
 - `sync_operations` — operation history (counts, status, timestamps)
 - `sync_operation_items` — per-record results (action, status, error, timing)
@@ -182,6 +182,8 @@ Repositories:
 - `src/main/services/db/config-repository.js` — connections + configurations CRUD
 - `src/main/services/db/operation-repository.js` — operations + items CRUD + getDashboardStats
 
+**Auth secrets:** Passwords, access keys, cookies, and other credentials are entered manually when connecting or syncing. They stay in memory for the current app session only and are not written to saved connections, settings, logs, or other durable storage. Session cookies used for Cookie auth are session-scoped and cleared on startup.
+
 > **After fresh install:** Run `npm install` — the `postinstall` script automatically rebuilds `better-sqlite3` for Electron's Node.js ABI. `better-sqlite3` must be **12.8.0 or newer** (this project uses `^12.11.1`) so it compiles as C++20 against Electron 41. Older 9.x releases fail that build and leave no bindings file. If a rebuild is ever needed again explicitly, run `npm run rebuild`.
 
 ## Tests and tooling
@@ -190,14 +192,14 @@ Repositories:
 - `npm test` runs `tests/run-all.js`, which executes `tests/unit/*.test.js`.
 - `npm run lint` runs ESLint.
 - `npm run sync:vendor` copies Font Awesome into `src/renderer/vendor`.
-- `npm run generate:icon` writes `build/icon.ico`, `build/icon.png`, and `src/renderer/assets/logo.png`.
+- `npm run generate:icon` resizes `resources/logo/sitefinity-cpilot.png` into `build/icon.ico`, `build/icon.png`, and `src/renderer/assets/logo.png`.
 - `npm run build:win` builds an NSIS installer with electron-builder. App id `com.softasium.sitefinity-cpilot`.
 
-Unit tests cover: `json-parser`, `field-mapper`, `comparison-engine` (37 tests, all passing).
+Unit tests cover: `json-parser`, `field-mapper`, `comparison-engine` (including nested/arbitrary-key JSON item detection).
 
 ## Versioning a new release
 
-Current version: **0.1.0**.
+Current version: **1.0.0**.
 
 When asked to create or generate a release, edit files only:
 

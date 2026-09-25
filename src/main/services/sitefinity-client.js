@@ -79,6 +79,8 @@ function installCookieCapture(win) {
   const ses = win.webContents.session;
   if (ses.__cpilotCookieCapture) return;
   ses.__cpilotCookieCapture = true;
+  // Drop cookies left on disk from earlier builds so session auth cannot survive restart.
+  ses.clearStorageData({ storages: ["cookies"] }).catch(function () {});
   ses.webRequest.onHeadersReceived(
     { urls: ["http://*/*", "https://*/*"] },
     function (details, callback) {
@@ -96,6 +98,7 @@ function installCookieCapture(win) {
           name: pair.slice(0, eq).trim(),
           value: pair.slice(eq + 1).trim(),
           path: "/",
+          session: true,
         }));
       }
       Promise.all(jobs).then(function () {
@@ -129,6 +132,7 @@ async function applyCookieJar(win, targetUrl, cookieHeader) {
       name: trimmed.slice(0, eq).trim(),
       value: trimmed.slice(eq + 1).trim(),
       path: "/",
+      session: true,
     });
   }
 }
@@ -491,8 +495,8 @@ async function updateItem(connOpts, itemId, patch) {
   var credentials = { username: connOpts.username, password: connOpts.password, cookie: connOpts.cookie, accessKey: connOpts.accessKey };
   var authHeaders = buildAuthHeaders(connOpts.authType, credentials);
 
-  // Sitefinity PATCH endpoint: /api/default/module('itemId')
-  var patchUrl = connOpts.apiEndpoint.replace(/\/$/, "") + "('" + itemId + "')";
+  // Sitefinity GUID key: /api/default/module(itemId) with no quotes
+  var patchUrl = connOpts.apiEndpoint.replace(/\/$/, "") + "(" + itemId + ")";
 
   var res = await request({
     method: "PATCH",
@@ -523,7 +527,7 @@ async function deleteItem(connOpts, itemId) {
   var credentials = { username: connOpts.username, password: connOpts.password, cookie: connOpts.cookie, accessKey: connOpts.accessKey };
   var authHeaders = buildAuthHeaders(connOpts.authType, credentials);
 
-  var deleteUrl = connOpts.apiEndpoint.replace(/\/$/, "") + "('" + itemId + "')";
+  var deleteUrl = connOpts.apiEndpoint.replace(/\/$/, "") + "(" + itemId + ")";
 
   var res = await request({
     method: "DELETE",

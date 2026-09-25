@@ -1,6 +1,6 @@
 {
   "name": "sitefinity-c-pilot",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "A JSON-driven content management and automation tool for Sitefinity CMS Dynamic Modules.",
   "license": "MIT",
   "main": "src/main/index.js",

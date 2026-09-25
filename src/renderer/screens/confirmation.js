@@ -66,7 +66,7 @@
 
           <div class="form-group">
             <label class="form-label" for="conf-op-name">Operation Name (optional)</label>
-            <input type="text" id="conf-op-name" class="form-input" placeholder="e.g. Lifestyle Catalog Import 2026-09" value="${escHtml(state.operationName || "")}" />
+            <input type="text" id="conf-op-name" class="form-input" placeholder="e.g. Your Module Import 2026-09" value="${escHtml(state.operationName || "")}" />
             <p class="form-hint">A name for this operation that will appear in the history.</p>
           </div>
         </div>

@@ -203,7 +203,7 @@ function getDashboardStats() {
            started_at, completed_at, created_count, updated_count, failed_count
     FROM sync_operations
     ORDER BY started_at DESC
-    LIMIT 10
+    LIMIT 5
   `).all();
 
   return {

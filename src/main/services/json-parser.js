@@ -1,11 +1,9 @@
 /**
  * json-parser.js — Parse, validate, and analyse JSON source data.
  *
- * Supports two root structures:
- *   1. Root array:     [ { ExternalId: "...", ... }, ... ]
- *   2. Wrapped object: { "module": "...", "items": [ ... ] }
- *
- * Returns a structured analysis result; does not modify any Sitefinity data.
+ * Finds the content-item array by walking nested objects (any property name,
+ * any depth), not only fixed keys like value/items/data. Returns a flat list
+ * of item objects for the mapping UI.
  */
 
 "use strict";
@@ -48,9 +46,153 @@ function inferFields(records) {
 
 // ── Nested path resolution ─────────────────────────────────────────────────
 
+function isPlainObject(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+/** Mild boost for common collection property names; detection does not require them. */
+var PREFERRED_LEAF_KEYS = {
+  value: 15,
+  items: 12,
+  data: 12,
+  records: 10,
+  results: 10,
+  content: 8,
+};
+
+var CONTENT_HINT_KEYS = [
+  "Id", "id", "Title", "title", "ExternalId", "externalId",
+  "UrlName", "urlName", "Name", "name", "Code", "code",
+];
+
 /**
- * Try to automatically detect which property of a root object holds the record array.
- * Returns the property path string or null if root is already an array.
+ * Score an array as a content-item collection.
+ *
+ * Selection rule (higher wins):
+ *   + object count (prefer real lists)
+ *   + key homogeneity across sampled elements
+ *   + average key count (richer record shapes)
+ *   + mild bonus for preferred leaf names (value/items/data/…)
+ *   + mild bonus for content-like shared keys (Id, Title, …)
+ *   − depth (slight preference for shallower arrays)
+ *   − wrapper-ish elements (single key whose value is object/array)
+ *
+ * Nested arrays inside individual items are not walked as siblings of the
+ * parent collection; only object properties are traversed, so item fields
+ * that happen to be arrays are not competing item lists.
+ *
+ * @param {any[]} arr
+ * @param {string|null} path
+ * @param {number} depth
+ * @returns {number|null} score, or null if not a viable item array
+ */
+function scoreArrayCandidate(arr, path, depth) {
+  if (!Array.isArray(arr) || arr.length === 0) return null;
+
+  var objects = arr.filter(isPlainObject);
+  if (objects.length === 0) return null;
+
+  var sampleSize = Math.min(10, objects.length);
+  var sample = objects.slice(0, sampleSize);
+  var keySets = sample.map(function (o) { return Object.keys(o); });
+  var shared = keySets[0].slice();
+  for (var i = 1; i < keySets.length; i++) {
+    shared = shared.filter(function (k) { return keySets[i].indexOf(k) !== -1; });
+  }
+
+  var avgKeys = keySets.reduce(function (sum, keys) { return sum + keys.length; }, 0) / keySets.length;
+  if (avgKeys < 1) return null;
+
+  var homogeneity = shared.length / avgKeys;
+
+  var wrapperish = 0;
+  sample.forEach(function (obj, idx) {
+    var keys = keySets[idx];
+    if (keys.length !== 1) return;
+    var only = obj[keys[0]];
+    if (only !== null && typeof only === "object") wrapperish += 1;
+  });
+  wrapperish = wrapperish / sampleSize;
+
+  var leaf = path ? path.split(".").pop() : "";
+  var preferredBonus = PREFERRED_LEAF_KEYS[leaf] || 0;
+
+  var hintBonus = 0;
+  shared.forEach(function (k) {
+    if (CONTENT_HINT_KEYS.indexOf(k) !== -1) hintBonus += 5;
+  });
+
+  var score =
+    objects.length * 10 +
+    homogeneity * 25 +
+    avgKeys * 3 +
+    preferredBonus +
+    hintBonus -
+    depth * 4 -
+    wrapperish * 40;
+
+  if (objects.length === 1 && avgKeys >= 2) score += 5;
+  if (objects.length === 1 && avgKeys < 2) score -= 10;
+
+  return score;
+}
+
+/**
+ * Walk objects (not into array elements) and collect scored array candidates.
+ * @param {any} node
+ * @param {string|null} path
+ * @param {number} depth
+ * @param {{ path: string|null, records: any[], depth: number, score: number }[]} out
+ */
+function collectArrayCandidates(node, path, depth, out) {
+  if (Array.isArray(node)) {
+    var rootScore = scoreArrayCandidate(node, path, depth);
+    if (rootScore !== null) {
+      out.push({ path: path, records: node, depth: depth, score: rootScore });
+    }
+    return;
+  }
+
+  if (!isPlainObject(node)) return;
+
+  Object.keys(node).forEach(function (key) {
+    var val = node[key];
+    var childPath = path ? path + "." + key : key;
+    if (Array.isArray(val)) {
+      var score = scoreArrayCandidate(val, childPath, depth + 1);
+      if (score !== null) {
+        out.push({ path: childPath, records: val, depth: depth + 1, score: score });
+      }
+      // Do not recurse into array elements — nested object fields stay item fields.
+    } else if (isPlainObject(val)) {
+      collectArrayCandidates(val, childPath, depth + 1, out);
+    }
+  });
+}
+
+/**
+ * True when a root object looks like a single content record (no item array).
+ * @param {object} obj
+ * @returns {boolean}
+ */
+function looksLikeSingleRecord(obj) {
+  var keys = Object.keys(obj);
+  if (keys.length < 2) return false;
+  var primitiveOrSimple = 0;
+  keys.forEach(function (k) {
+    var v = obj[k];
+    if (v === null || typeof v !== "object") {
+      primitiveOrSimple += 1;
+    } else if (Array.isArray(v) && (v.length === 0 || typeof v[0] !== "object")) {
+      primitiveOrSimple += 1;
+    }
+  });
+  return primitiveOrSimple >= Math.ceil(keys.length / 2);
+}
+
+/**
+ * Automatically detect which path holds the record array.
+ * Walks nested objects; property names are not fixed.
  * @param {any} parsed
  * @returns {{ path: string|null, records: any[], candidates: string[] }}
  */
@@ -59,43 +201,34 @@ function detectRecordPath(parsed) {
     return { path: null, records: parsed, candidates: [] };
   }
 
-  if (!parsed || typeof parsed !== "object") {
+  if (!isPlainObject(parsed)) {
     return { path: null, records: [], candidates: [] };
   }
 
-  var candidates = [];
-  Object.keys(parsed).forEach(function (key) {
-    if (Array.isArray(parsed[key]) && parsed[key].length > 0) {
-      candidates.push(key);
+  var found = [];
+  collectArrayCandidates(parsed, null, 0, found);
+
+  if (found.length === 0) {
+    if (looksLikeSingleRecord(parsed)) {
+      return { path: null, records: [parsed], candidates: [] };
     }
+    return { path: null, records: [], candidates: [] };
+  }
+
+  found.sort(function (a, b) {
+    if (b.score !== a.score) return b.score - a.score;
+    if (a.depth !== b.depth) return a.depth - b.depth;
+    return (b.records.length || 0) - (a.records.length || 0);
   });
 
-  // OData-style: prefer 'value'
-  if (candidates.includes("value")) {
-    return { path: "value", records: parsed.value, candidates };
-  }
+  var best = found[0];
+  var candidates = found.map(function (c) { return c.path; }).filter(Boolean);
 
-  // Common keys: items, data, records, results
-  var preferred = ["items", "data", "records", "results", "content"];
-  for (var i = 0; i < preferred.length; i++) {
-    if (candidates.includes(preferred[i])) {
-      return { path: preferred[i], records: parsed[preferred[i]], candidates };
-    }
-  }
-
-  // Fall back to the first array property with the most elements
-  if (candidates.length === 1) {
-    return { path: candidates[0], records: parsed[candidates[0]], candidates };
-  }
-  if (candidates.length > 1) {
-    // return the biggest
-    var best = candidates.reduce(function (a, b) {
-      return parsed[a].length >= parsed[b].length ? a : b;
-    });
-    return { path: best, records: parsed[best], candidates };
-  }
-
-  return { path: null, records: [], candidates: [] };
+  return {
+    path: best.path,
+    records: best.records,
+    candidates: candidates,
+  };
 }
 
 /**
@@ -179,10 +312,10 @@ function parseJson(jsonText, forcedPath) {
   var rootType = Array.isArray(parsed) ? "array" : "object";
 
   var detected = detectRecordPath(parsed);
-  var path     = forcedPath !== undefined ? forcedPath : detected.path;
-  var records  = forcedPath !== undefined
-    ? getRecordsByPath(parsed, forcedPath)
-    : detected.records;
+  // null/undefined recordPath from the UI means auto-detect (not "root array only")
+  var useForced = forcedPath !== undefined && forcedPath !== null && forcedPath !== "";
+  var path      = useForced ? forcedPath : detected.path;
+  var records   = useForced ? getRecordsByPath(parsed, forcedPath) : detected.records;
 
   if (!Array.isArray(records) || records.length === 0) {
     return {

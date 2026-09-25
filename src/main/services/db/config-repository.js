@@ -19,7 +19,8 @@ function now() {
 // ── Sitefinity Connections ─────────────────────────────────────────────────
 
 /**
- * List all saved Sitefinity connections (credentials are NOT returned).
+ * List all saved Sitefinity connections.
+ * Only non-secret fields are stored or returned (name, endpoint, auth type).
  * @returns {object[]}
  */
 function listConnections() {
@@ -29,20 +30,20 @@ function listConnections() {
 }
 
 /**
- * Get a single connection by id.
+ * Get a single connection by id (never returns secrets).
  * @param {string} id
  * @returns {object|null}
  */
 function getConnection(id) {
   return getDb()
-    .prepare("SELECT id, name, base_url, api_endpoint, auth_type, credential_ref, created_at, updated_at FROM sync_connections WHERE id = ?")
+    .prepare("SELECT id, name, base_url, api_endpoint, auth_type, created_at, updated_at FROM sync_connections WHERE id = ?")
     .get(id) || null;
 }
 
 /**
  * Create or update a connection.
- * Returns the saved connection (without credential_ref).
- * @param {object} data - { id?, name, baseUrl, apiEndpoint, authType, credentialRef? }
+ * Persists name, URLs, and auth type only — credential_ref is always cleared.
+ * @param {object} data - { id?, name, baseUrl, apiEndpoint, authType }
  * @returns {object}
  */
 function saveConnection(data) {
@@ -50,19 +51,19 @@ function saveConnection(data) {
   const id = data.id || uid();
   const ts = now();
 
-  const existing = db.prepare("SELECT id FROM sync_connections WHERE id = ?").get(id);
+  const existing = db.prepare("SELECT id, created_at FROM sync_connections WHERE id = ?").get(id);
 
   if (existing) {
     db.prepare(`
       UPDATE sync_connections
-      SET name=?, base_url=?, api_endpoint=?, auth_type=?, credential_ref=COALESCE(?,credential_ref), updated_at=?
+      SET name=?, base_url=?, api_endpoint=?, auth_type=?, credential_ref=NULL, updated_at=?
       WHERE id=?
-    `).run(data.name, data.baseUrl, data.apiEndpoint, data.authType || "none", data.credentialRef || null, ts, id);
+    `).run(data.name, data.baseUrl, data.apiEndpoint, data.authType || "none", ts, id);
   } else {
     db.prepare(`
       INSERT INTO sync_connections (id, name, base_url, api_endpoint, auth_type, credential_ref, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(id, data.name, data.baseUrl, data.apiEndpoint, data.authType || "none", data.credentialRef || null, ts, ts);
+      VALUES (?, ?, ?, ?, ?, NULL, ?, ?)
+    `).run(id, data.name, data.baseUrl, data.apiEndpoint, data.authType || "none", ts, ts);
   }
 
   return {

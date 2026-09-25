@@ -100,6 +100,18 @@
         });
       }
 
+      function authBadge(authType) {
+        var value = String(authType || "none");
+        var variantMap = {
+          none:      "badge--unchanged",
+          basic:     "badge--update",
+          cookie:    "badge--conflict",
+          accessKey: "badge--create",
+        };
+        var variant = variantMap[value] || "badge--skip";
+        return `<span class="badge ${variant}">${escHtml(value)}</span>`;
+      }
+
       function renderConnectionsList(connections) {
         if (connections.length === 0) {
           return `<p style="color:var(--text-muted);font-size:0.875rem;margin:0">No saved connections. Connections are saved from the Connection wizard step.</p>`;
@@ -112,7 +124,7 @@
               return `<tr>
                 <td style="font-weight:550">${escHtml(c.name)}</td>
                 <td class="data-table__muted data-table__truncate" style="max-width:250px">${escHtml(c.api_endpoint)}</td>
-                <td class="data-table__muted">${escHtml(c.auth_type)}</td>
+                <td>${authBadge(c.auth_type)}</td>
                 <td class="data-table__muted">${escHtml(date)}</td>
                 <td>
                   <button type="button" class="data-table__action-btn st-delete-conn-btn" data-id="${escHtml(c.id)}" data-name="${escHtml(c.name)}" style="color:var(--badge-delete-text)">

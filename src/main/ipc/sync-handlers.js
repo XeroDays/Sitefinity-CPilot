@@ -16,7 +16,6 @@ const compEngine       = require("../services/comparison-engine");
 const syncExecutor     = require("../services/sync-executor");
 const opRepo           = require("../services/db/operation-repository");
 const { ipc: log }     = require("../services/app-logger");
-const { decryptPassword } = require("./connection-handlers");
 
 function registerSyncHandlers() {
 
@@ -29,7 +28,7 @@ function registerSyncHandlers() {
         apiEndpoint: opts.apiEndpoint,
         authType:    opts.authType || "none",
         username:    opts.username || "",
-        password:    decryptPassword(opts.encryptedPassword) || opts.password || "",
+        password:    opts.password || "",
         cookie:      opts.cookie || "",
         accessKey:   opts.accessKey || "",
         pageSize:    opts.pageSize || 100,

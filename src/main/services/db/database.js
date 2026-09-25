@@ -116,6 +116,10 @@ const MIGRATIONS = [
       CREATE INDEX IF NOT EXISTS idx_operations_started ON sync_operations(started_at DESC);
     `);
   },
+  // v2 — strip any previously stored auth secrets from saved connections
+  function v2(db) {
+    db.exec(`UPDATE sync_connections SET credential_ref = NULL WHERE credential_ref IS NOT NULL`);
+  },
 ];
 
 function runMigrations(db) {

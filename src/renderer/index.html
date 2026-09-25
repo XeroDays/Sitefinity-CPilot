@@ -77,14 +77,13 @@
   <!-- ── About Modal ───────────────────────────────────────────────────────── -->
   <div class="modal" id="about-modal" hidden>
     <div class="modal-backdrop" data-close-about></div>
-    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="about-title">
-      <header class="modal-header">
-        <h2 id="about-title">About</h2>
-        <button type="button" class="modal-close" id="about-close-btn" aria-label="Close">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </header>
-      <div class="modal-body" id="about-body"></div>
+    <div class="modal-content about-dialog" role="dialog" aria-modal="true" aria-labelledby="about-title">
+      <h2 id="about-title" class="about-product-title">Sitefinity C-Pilot</h2>
+      <div class="about-divider" aria-hidden="true"></div>
+      <div class="about-body" id="about-body"></div>
+      <div class="about-footer">
+        <button type="button" class="btn btn-primary about-ok-btn" id="about-ok-btn">OK</button>
+      </div>
     </div>
   </div>
 

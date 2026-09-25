@@ -17,19 +17,26 @@ The version must match the `"version"` field in `package.json`.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-09-25
+
 ### Added
 
-- Connection screen: an Access Key authentication option with a single key field. The key is sent as the X-SF-Access-Key header on Sitefinity requests, including test, compare, and execute.
+- Connection screen: an Access Key authentication option with a single key field. The key is sent as the X-SF-Access-Key header on Sitefinity requests, including test, compare, and execute. Like other secrets, it is entered per session and is not saved with the connection.
 - Identity field picker in Field Mapping: a new Identity radio-button column lets users designate any mapped Sitefinity field as the matching key directly on the Field Mapping screen; auto-selects the best candidate (prefers existing key → id-like field name → first mapped field); blocks "Next" and shows an alert when no identity is selected; persists the choice to Sync Settings which now shows a hint that the value was set in Field Mapping
 - Preferences in the gear menu opens the Settings screen. The Preferences section there shows the theme dropdown (Dark or Light) directly, and Apply switches the app appearance immediately and keeps the choice for the next launch
+- Desktop shell with a splash screen and a single main menu for Sitefinity C-Pilot
+- About dialog with product version and license text
 
 ### Changed
 
+- JSON Source finds content items by walking nested objects and arrays; the item list no longer has to sit under a fixed property name like value, items, or data
+- Auth secrets (passwords, access keys, session cookies) are no longer saved with Sitefinity connections. Enter them each time you connect; only name, endpoint, and auth type are stored.
 - Sitefinity API calls (test connection, compare, and execute) appear in the DevTools Network tab
 - Database, logs, and settings are stored together in Documents\Sitefinity CPilot. On startup, files already written under Documents\Sitefinity C-Pilot or in the Electron user-data folder are copied into the new folder when the destination file is missing.
 
 ### Fixed
 
+- Updating an existing Sitefinity item no longer requests a URL the server cannot find. The item address uses the GUID without quotes, which is the form Sitefinity expects.
 - Test Connection failed with "Failed to fetch" and showed nothing in the DevTools Network tab, because the page blocked connections to Sitefinity. Those API calls are now allowed.
 - Database failed to initialise because `better-sqlite3` 9.x could not compile for Electron 41 (C++20 required). The app now uses `better-sqlite3` 12.11 or newer, which builds for Electron's native module and loads on startup.
 - Startup now shows an actionable error dialog when the native database module fails to load, instead of silently continuing and producing cryptic IPC errors throughout the session
@@ -56,10 +63,3 @@ The version must match the `"version"` field in `package.json`.
 - Field mapper: exact, case-insensitive, and manual mapping with validation
 - 37 unit tests for json-parser, field-mapper, and comparison-engine (all passing)
 - Developer Tools shortcut in the gear menu
-
-## [0.1.0] - 2026-09-25
-
-### Added
-
-- Desktop shell with a splash screen and a single main menu for Sitefinity C-Pilot
-- About dialog with product version and license text

@@ -40,7 +40,7 @@
             <label class="form-label form-label--required" for="conn-endpoint">API Endpoint URL</label>
             <div style="display:flex;gap:0.6rem;align-items:flex-start">
               <input type="url" id="conn-endpoint" class="form-input"
-                placeholder="https://your-instance.sitefinity.com/api/default/mobilelifestylecatalogs"
+                placeholder="https://your-instance.sitefinity.com/api/default/your-module"
                 value="${escHtml(conn.apiEndpoint)}" />
               <button type="button" id="conn-test-btn" class="btn btn-secondary" style="flex-shrink:0;white-space:nowrap">
                 <i class="fa-solid fa-plug" aria-hidden="true"></i> Test Connection
@@ -66,7 +66,7 @@
             <div class="form-group" id="conn-name-group">
               <label class="form-label" for="conn-config-name">Configuration Name (optional)</label>
               <input type="text" id="conn-config-name" class="form-input"
-                placeholder="e.g. Production Lifestyle Catalogs"
+                placeholder="e.g. Production Your Module"
                 value="${escHtml(conn.name)}" />
             </div>
           </div>
@@ -81,7 +81,7 @@
               <div class="form-group">
                 <label class="form-label form-label--required" for="conn-password">Password</label>
                 <input type="password" id="conn-password" class="form-input" autocomplete="current-password" />
-                <p class="form-hint">Credentials are encrypted with the OS keychain before storage.</p>
+                <p class="form-hint">Enter each time you connect. Passwords are not saved with the connection.</p>
               </div>
             </div>
           </div>
@@ -89,9 +89,8 @@
           <div id="conn-access-key" style="display:none">
             <div class="form-group">
               <label class="form-label form-label--required" for="conn-access-key-input">Access Key</label>
-              <input type="password" id="conn-access-key-input" class="form-input" autocomplete="off"
-                value="${escHtml(conn.accessKey || "")}" />
-              <p class="form-hint">Sent as the X-SF-Access-Key header on every Sitefinity request. Encrypted with the OS keychain before storage.</p>
+              <input type="password" id="conn-access-key-input" class="form-input" autocomplete="off" />
+              <p class="form-hint">Sent as the X-SF-Access-Key header. Enter each time you connect — access keys are not saved.</p>
             </div>
           </div>
 
@@ -157,6 +156,10 @@
       }
       updateCredVisibility();
       on(authSelect, "change", updateCredVisibility);
+
+      // In-memory secrets for this running session only — never loaded from disk.
+      if (passwordInput && conn.password) passwordInput.value = conn.password;
+      if (accessKeyInput && conn.accessKey) accessKeyInput.value = conn.accessKey;
 
       var _connectionResult = null;
 
@@ -301,14 +304,12 @@
 
       on(saveBtn, "click", async function () {
         var name = nameInput.value.trim() || (_connectionResult && _connectionResult.moduleName) || "Untitled Connection";
+        // Save name / endpoint / auth type only — never persist secrets.
         var result = await window.cpilot.saveConnection({
           name:        name,
           baseUrl:     endpointInput.value.trim().replace(/\/api\/.*/, ""),
           apiEndpoint: endpointInput.value.trim(),
           authType:    authSelect.value,
-          username:    usernameInput ? usernameInput.value : "",
-          password:    passwordInput ? passwordInput.value : "",
-          accessKey:   accessKeyInput ? accessKeyInput.value : "",
         });
         if (result.ok) {
           window.cpilotToast.success("Connection saved as '" + name + "'");

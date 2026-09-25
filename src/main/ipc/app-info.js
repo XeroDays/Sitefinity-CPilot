@@ -19,14 +19,26 @@ function buildAppInfo() {
     .digest("hex")
     .slice(0, 8);
 
+  // Preserve blank-line paragraphs; collapse soft wraps within each block.
+  function formatLicenseParagraphs(text) {
+    return text
+      .replace(/\r\n/g, "\n")
+      .trim()
+      .split(/\n\s*\n/)
+      .map((block) => block.replace(/\s+/g, " ").trim())
+      .filter(Boolean)
+      .join("\n\n");
+  }
+
   let licenseSummary =
-    "MIT License — Copyright (c) 2026 Softasium Software Systems. Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction.";
+    "MIT License — Copyright (c) 2026 Softasium Software Systems.\n\n" +
+    "Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction.";
 
   try {
     const licensePath = path.join(app.getAppPath(), "LICENSE");
-    const licenseText = fs.readFileSync(licensePath, "utf8").trim();
-    if (licenseText) {
-      licenseSummary = licenseText.replace(/\r\n/g, " ").replace(/\s+/g, " ");
+    const licenseText = fs.readFileSync(licensePath, "utf8");
+    if (licenseText && licenseText.trim()) {
+      licenseSummary = formatLicenseParagraphs(licenseText);
     }
   } catch {
     // use the default summary above
