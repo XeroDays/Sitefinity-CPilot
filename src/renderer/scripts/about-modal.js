@@ -77,6 +77,14 @@
     });
   }
 
+  const preferencesItem = document.getElementById("preferences-item");
+  if (preferencesItem) {
+    preferencesItem.addEventListener("click", () => {
+      setMenuOpen(false);
+      if (window.cpilotRouter) window.cpilotRouter.navigateTo("settings");
+    });
+  }
+
   if (aboutClose) {
     aboutClose.addEventListener("click", closeAbout);
   }

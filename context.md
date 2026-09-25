@@ -20,13 +20,13 @@
 - `L49` : Startup
 - `L62` : Splash Screen
 - `L69` : Application Layout
-- `L85` : Screens and Router
-- `L123`: IPC
-- `L146`: Services (main process)
-- `L161`: Storage and logging
-- `L167`: Database (SQLite)
-- `L185`: Tests and tooling
-- `L196`: Versioning a new release
+- `L87` : Screens and Router
+- `L125`: IPC
+- `L148`: Services (main process)
+- `L163`: Storage and logging
+- `L169`: Database (SQLite)
+- `L187`: Tests and tooling
+- `L198`: Versioning a new release
 
 ## Overview
 
@@ -82,6 +82,8 @@ Styles:
 - `src/renderer/styles/app.css`     — base layout, header, sidebar, toast; dark tokens on `:root`, light tokens on `[data-theme="light"]`
 - `src/renderer/styles/screens.css` — all screen-specific styles (wizard, forms, tables, badges, etc.)
 
+The gear menu Preferences item opens the Settings screen. That screen shows the theme dropdown (Dark or Light); Apply sets `data-theme` and saves the choice.
+
 ## Screens and Router
 
 **Router** (`src/renderer/scripts/router.js`):
@@ -92,7 +94,7 @@ Styles:
 
 **Sidebar** (`src/renderer/scripts/sidebar.js`):
 - Listens for `cpilot:routechanged` to update active item.
-- Nav items: Dashboard, New Operation, Saved Configurations, Operation History; bottom: Settings.
+- Nav items: Dashboard, New Operation, Saved Configurations, Operation History.
 
 **Wizard state** (`src/renderer/scripts/wizard-state.js`):
 - `window.wizardState` — in-memory store for the active wizard operation.
@@ -180,7 +182,7 @@ Repositories:
 - `src/main/services/db/config-repository.js` — connections + configurations CRUD
 - `src/main/services/db/operation-repository.js` — operations + items CRUD + getDashboardStats
 
-> **After fresh install:** Run `npm install` — the `postinstall` script automatically rebuilds `better-sqlite3` for Electron's Node.js ABI. If a rebuild is ever needed again explicitly, run `npm run rebuild`.
+> **After fresh install:** Run `npm install` — the `postinstall` script automatically rebuilds `better-sqlite3` for Electron's Node.js ABI. `better-sqlite3` must be **12.8.0 or newer** (this project uses `^12.11.1`) so it compiles as C++20 against Electron 41. Older 9.x releases fail that build and leave no bindings file. If a rebuild is ever needed again explicitly, run `npm run rebuild`.
 
 ## Tests and tooling
 

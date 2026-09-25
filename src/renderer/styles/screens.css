@@ -39,19 +39,6 @@
   flex: 1;
 }
 
-.preferences-panel {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border-subtle);
-}
-
-.preferences-panel__actions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-top: 0.25rem;
-}
-
 .cpilot-screen__footer {
   display: flex;
   align-items: center;

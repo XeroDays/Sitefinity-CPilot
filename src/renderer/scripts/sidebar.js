@@ -8,10 +8,6 @@
     { id: "history",        label: "Operation History",      icon: "fa-solid fa-clock-rotate-left",   screen: "history" },
   ];
 
-  var BOTTOM_ITEMS = [
-    { id: "settings",       label: "Settings",               icon: "fa-solid fa-gear",                screen: "settings" },
-  ];
-
   // ── Build sidebar ─────────────────────────────────────────────────────────
   function buildSidebar() {
     var nav = document.getElementById("sidebar");
@@ -25,17 +21,6 @@
     });
 
     nav.appendChild(ul);
-
-    // Bottom section
-    var bottom = document.createElement("div");
-    bottom.className = "sidebar-bottom";
-    var ulBottom = document.createElement("ul");
-    ulBottom.className = "sidebar-nav";
-    BOTTOM_ITEMS.forEach(function (item) {
-      ulBottom.appendChild(createNavItem(item));
-    });
-    bottom.appendChild(ulBottom);
-    nav.appendChild(bottom);
   }
 
   function createNavItem(item) {
