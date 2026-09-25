@@ -87,6 +87,7 @@
           authType:        conn.authType,
           username:        conn.username,
           password:        conn.password,
+          accessKey:       conn.accessKey,
           sourceRecords:   src.records,
           mappings:        mappings,
           matchingKey:     settings.matchingKey,

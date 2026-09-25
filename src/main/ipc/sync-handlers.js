@@ -31,6 +31,7 @@ function registerSyncHandlers() {
         username:    opts.username || "",
         password:    decryptPassword(opts.encryptedPassword) || opts.password || "",
         cookie:      opts.cookie || "",
+        accessKey:   opts.accessKey || "",
         pageSize:    opts.pageSize || 100,
       }, function (progress) {
         if (!event.sender.isDestroyed()) {

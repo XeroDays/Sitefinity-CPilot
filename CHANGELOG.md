@@ -19,6 +19,7 @@ The version must match the `"version"` field in `package.json`.
 
 ### Added
 
+- Connection screen: an Access Key authentication option with a single key field. The key is sent as the X-SF-Access-Key header on Sitefinity requests, including test, compare, and execute.
 - Identity field picker in Field Mapping: a new Identity radio-button column lets users designate any mapped Sitefinity field as the matching key directly on the Field Mapping screen; auto-selects the best candidate (prefers existing key → id-like field name → first mapped field); blocks "Next" and shows an alert when no identity is selected; persists the choice to Sync Settings which now shows a hint that the value was set in Field Mapping
 - Preferences in the gear menu opens the Settings screen. The Preferences section there shows the theme dropdown (Dark or Light) directly, and Apply switches the app appearance immediately and keeps the choice for the next launch
 

@@ -27,7 +27,7 @@ function requestCancel() {
  * @param {object} opts
  * @param {object[]}  opts.records         - comparison plan records
  * @param {string[]}  [opts.selectedIds]   - subset of externalIds to process (null = all actionable)
- * @param {object}    opts.connection       - { apiEndpoint, authType, username, password, cookie }
+ * @param {object}    opts.connection       - { apiEndpoint, authType, username, password, cookie, accessKey }
  * @param {object[]}  opts.mappings         - field mapping array
  * @param {string}    opts.matchingKey      - Sitefinity field name
  * @param {string}    [opts.operationName]

@@ -7,9 +7,10 @@
       name: "",
       baseUrl: "",
       apiEndpoint: "",
-      authType: "none",   // 'none' | 'basic' | 'cookie'
+      authType: "none",   // 'none' | 'basic' | 'cookie' | 'accessKey'
       username: "",
       password: "",
+      accessKey: "",
       savedConnectionId: null,
     },
     // Result from test-connection / fetch-module

@@ -10,6 +10,7 @@
  *   'none'  — no credentials
  *   'basic' — HTTP Basic auth (Authorization: Basic base64(user:pass))
  *   'cookie'— session cookie passed as credentials
+ *   'accessKey' — X-SF-Access-Key: <access key>
  */
 
 "use strict";
@@ -217,6 +218,9 @@ function buildAuthHeaders(authType, credentials) {
   if (authType === "cookie" && credentials && credentials.cookie) {
     return { "Cookie": credentials.cookie };
   }
+  if (authType === "accessKey" && credentials && credentials.accessKey) {
+    return { "X-SF-Access-Key": credentials.accessKey };
+  }
   return {};
 }
 
@@ -337,7 +341,7 @@ async function testConnection(opts) {
   }
 
   try {
-    var credentials = { username: opts.username, password: opts.password, cookie: opts.cookie };
+    var credentials = { username: opts.username, password: opts.password, cookie: opts.cookie, accessKey: opts.accessKey };
     var authHeaders = buildAuthHeaders(opts.authType, credentials);
 
     // If cookie auth requested but no cookie yet, attempt form login
@@ -402,7 +406,7 @@ async function fetchAllRecords(opts, onProgress) {
     throw new Error(validation.error);
   }
 
-  var credentials = { username: opts.username, password: opts.password, cookie: opts.cookie };
+  var credentials = { username: opts.username, password: opts.password, cookie: opts.cookie, accessKey: opts.accessKey };
   var authHeaders = buildAuthHeaders(opts.authType, credentials);
 
   if (opts.authType === "cookie" && !opts.cookie && opts.username) {
@@ -452,7 +456,7 @@ async function fetchAllRecords(opts, onProgress) {
  * @returns {object} created item
  */
 async function createItem(connOpts, data) {
-  var credentials = { username: connOpts.username, password: connOpts.password, cookie: connOpts.cookie };
+  var credentials = { username: connOpts.username, password: connOpts.password, cookie: connOpts.cookie, accessKey: connOpts.accessKey };
   var authHeaders = buildAuthHeaders(connOpts.authType, credentials);
 
   var res = await request({
@@ -484,7 +488,7 @@ async function createItem(connOpts, data) {
  * @returns {object}
  */
 async function updateItem(connOpts, itemId, patch) {
-  var credentials = { username: connOpts.username, password: connOpts.password, cookie: connOpts.cookie };
+  var credentials = { username: connOpts.username, password: connOpts.password, cookie: connOpts.cookie, accessKey: connOpts.accessKey };
   var authHeaders = buildAuthHeaders(connOpts.authType, credentials);
 
   // Sitefinity PATCH endpoint: /api/default/module('itemId')
@@ -516,7 +520,7 @@ async function updateItem(connOpts, itemId, patch) {
  * @param {string} itemId
  */
 async function deleteItem(connOpts, itemId) {
-  var credentials = { username: connOpts.username, password: connOpts.password, cookie: connOpts.cookie };
+  var credentials = { username: connOpts.username, password: connOpts.password, cookie: connOpts.cookie, accessKey: connOpts.accessKey };
   var authHeaders = buildAuthHeaders(connOpts.authType, credentials);
 
   var deleteUrl = connOpts.apiEndpoint.replace(/\/$/, "") + "('" + itemId + "')";

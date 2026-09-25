@@ -60,6 +60,7 @@
                 <option value="none"  ${conn.authType === "none"   ? "selected" : ""}>None</option>
                 <option value="basic" ${conn.authType === "basic"  ? "selected" : ""}>Basic Auth (username / password)</option>
                 <option value="cookie"${conn.authType === "cookie" ? "selected" : ""}>Session / Cookie</option>
+                <option value="accessKey"${conn.authType === "accessKey" ? "selected" : ""}>Access Key</option>
               </select>
             </div>
             <div class="form-group" id="conn-name-group">
@@ -82,6 +83,15 @@
                 <input type="password" id="conn-password" class="form-input" autocomplete="current-password" />
                 <p class="form-hint">Credentials are encrypted with the OS keychain before storage.</p>
               </div>
+            </div>
+          </div>
+
+          <div id="conn-access-key" style="display:none">
+            <div class="form-group">
+              <label class="form-label form-label--required" for="conn-access-key-input">Access Key</label>
+              <input type="password" id="conn-access-key-input" class="form-input" autocomplete="off"
+                value="${escHtml(conn.accessKey || "")}" />
+              <p class="form-hint">Sent as the X-SF-Access-Key header on every Sitefinity request. Encrypted with the OS keychain before storage.</p>
             </div>
           </div>
 
@@ -127,6 +137,8 @@
       var usernameInput = body.querySelector("#conn-username");
       var passwordInput = body.querySelector("#conn-password");
       var credsDiv      = body.querySelector("#conn-credentials");
+      var accessKeyDiv  = body.querySelector("#conn-access-key");
+      var accessKeyInput = body.querySelector("#conn-access-key-input");
       var cookieHint    = body.querySelector("#conn-cookie-hint");
       var resultPanel   = body.querySelector("#conn-result-panel");
       var loadingDiv    = body.querySelector("#conn-loading");
@@ -140,6 +152,7 @@
       function updateCredVisibility() {
         var at = authSelect.value;
         credsDiv.style.display = (at === "basic" || at === "cookie") ? "" : "none";
+        accessKeyDiv.style.display = at === "accessKey" ? "" : "none";
         cookieHint.style.display = at === "cookie" ? "" : "none";
       }
       updateCredVisibility();
@@ -247,6 +260,7 @@
           authType:    authSelect.value,
           username:    usernameInput ? usernameInput.value : "",
           password:    passwordInput ? passwordInput.value : "",
+          accessKey:   accessKeyInput ? accessKeyInput.value : "",
         });
 
         testBtn.disabled = false;
@@ -259,6 +273,7 @@
             authType:    authSelect.value,
             username:    usernameInput ? usernameInput.value : "",
             password:    passwordInput ? passwordInput.value : "",
+            accessKey:   accessKeyInput ? accessKeyInput.value : "",
             name:        nameInput.value.trim(),
           });
           window.wizardState.setModuleInfo(result);
@@ -274,6 +289,7 @@
           authType:    authSelect.value,
           username:    usernameInput ? usernameInput.value : "",
           password:    passwordInput ? passwordInput.value : "",
+          accessKey:   accessKeyInput ? accessKeyInput.value : "",
           name:        nameInput.value.trim(),
         });
         window.cpilotRouter.navigateTo("json-source");
@@ -292,6 +308,7 @@
           authType:    authSelect.value,
           username:    usernameInput ? usernameInput.value : "",
           password:    passwordInput ? passwordInput.value : "",
+          accessKey:   accessKeyInput ? accessKeyInput.value : "",
         });
         if (result.ok) {
           window.cpilotToast.success("Connection saved as '" + name + "'");

@@ -107,7 +107,7 @@ The gear menu Preferences item opens the Settings screen. That screen shows the 
 
 **Screens** (in `src/renderer/screens/`):
 - `dashboard.js`     — stats cards, quick actions, recent operations table
-- `connection.js`    — API endpoint entry, test connection, auth config, save connection
+- `connection.js`    — API endpoint entry, test connection, auth config (None, Basic, Session / Cookie, Access Key), save connection
 - `json-source.js`   — file upload / paste, auto-parse, record path selection
 - `field-mapping.js` — mapping table with auto-suggestions and manual overrides
 - `sync-settings.js` — matching key, sync mode radio cards, deletion config, advanced options

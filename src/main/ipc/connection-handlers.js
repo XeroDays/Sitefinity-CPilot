@@ -32,6 +32,7 @@ function registerConnectionHandlers() {
         username:    opts.username || "",
         password:    decryptPassword(opts.encryptedPassword) || opts.password || "",
         cookie:      opts.cookie || "",
+        accessKey:   opts.accessKey || "",
       });
       return result;
     } catch (err) {
@@ -51,6 +52,7 @@ function registerConnectionHandlers() {
         username:    opts.username || "",
         password:    decryptPassword(opts.encryptedPassword) || opts.password || "",
         cookie:      opts.cookie || "",
+        accessKey:   opts.accessKey || "",
         pageSize:    opts.pageSize || 100,
       }, function (progress) {
         // Push progress to renderer
@@ -79,9 +81,10 @@ function registerConnectionHandlers() {
     try {
       // Encrypt password before storing a credential reference
       var credRef = null;
-      if (data.password) {
+      var secret = data.authType === "accessKey" ? data.accessKey : data.password;
+      if (secret) {
         try {
-          var encrypted = safeStorage.encryptString(data.password).toString("base64");
+          var encrypted = safeStorage.encryptString(secret).toString("base64");
           credRef = "safe:" + encrypted;
         } catch {
           // safeStorage unavailable in test environments — skip
