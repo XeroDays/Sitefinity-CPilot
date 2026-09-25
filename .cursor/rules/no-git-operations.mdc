@@ -1,0 +1,30 @@
+---
+description: Forbids all git operations — commits, tags, pushes, and GitHub releases — in this project
+alwaysApply: true
+---
+
+# No Git Operations — Ever
+
+**NEVER** run any of the following, even if the user explicitly asks:
+
+- `git commit` (or any variant)
+- `git tag`
+- `git push`
+- `git merge` / `git rebase`
+- `gh release create` or any GitHub CLI / API call that creates a release or tag
+- Any shell command that writes to the git history or remote
+
+## What to do instead
+
+All release and version work is **file edits only**:
+
+1. `package.json` — bump `"version"`
+2. `package-lock.json` — bump root `"version"` fields only
+3. `CHANGELOG.md` — move `[Unreleased]` into a new versioned section
+4. `context.md` — update the version reference and any affected notes
+
+After editing, **tell the user which files changed** and let them handle all git operations manually.
+
+## Why
+
+The user owns the git history. Do not create commits, tags, or GitHub releases from the agent.

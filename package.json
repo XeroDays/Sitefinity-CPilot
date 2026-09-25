@@ -1,0 +1,67 @@
+{
+  "name": "sitefinity-c-pilot",
+  "version": "0.1.0",
+  "description": "A JSON-driven content management and automation tool for Sitefinity CMS Dynamic Modules.",
+  "license": "MIT",
+  "main": "src/main/index.js",
+  "scripts": {
+    "start": "node scripts/start-electron.js",
+    "test": "node tests/run-all.js",
+    "lint": "eslint .",
+    "sync:vendor": "node scripts/sync-vendor.js",
+    "generate:icon": "node scripts/generate-windows-icon.js",
+    "prebuild:win": "node scripts/generate-windows-icon.js",
+    "build:win": "electron-builder --win nsis --publish never",
+    "postinstall": "node scripts/patch-electron-icon.js"
+  },
+  "build": {
+    "appId": "com.softasium.sitefinity-cpilot",
+    "productName": "Sitefinity C-Pilot",
+    "forceCodeSigning": false,
+    "publish": null,
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "build/icon.png",
+      "build/icon.ico",
+      "package.json"
+    ],
+    "win": {
+      "sign": false,
+      "signAndEditExecutable": true,
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "Sitefinity C-Pilot Setup.${ext}",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico"
+    }
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@fortawesome/fontawesome-free": "^6.5.1",
+    "electron": "^41.2.0",
+    "electron-builder": "^25.1.8",
+    "eslint": "^10.11.0",
+    "png-to-ico": "^2.1.8",
+    "rcedit": "^4.0.1",
+    "sharp": "^0.34.3"
+  },
+  "dependencies": {
+    "better-sqlite3": "^9.6.0",
+    "electron-log": "^5.4.4"
+  }
+}

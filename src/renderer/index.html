@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:;" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sitefinity C-Pilot</title>
+  <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css" />
+  <link rel="stylesheet" href="styles/app.css" />
+  <link rel="stylesheet" href="styles/screens.css" />
+</head>
+
+<body>
+  <div class="app-layout">
+
+    <!-- ── App Chrome Header ─────────────────────────────────────────────── -->
+    <header class="app-chrome-header" id="app-chrome-header">
+      <div class="app-chrome-header__brand">
+        <img class="brand-logo" src="assets/logo.png" alt="" width="28" height="28" />
+        <span class="brand-title">Sitefinity C-Pilot</span>
+      </div>
+      <div class="app-topbar" id="app-topbar">
+        <nav class="app-breadcrumb" aria-label="Breadcrumb">
+          <span class="app-breadcrumb__current" id="breadcrumb-current">Dashboard</span>
+        </nav>
+        <div class="app-topbar__right">
+          <div class="settings-dropdown">
+            <button type="button" class="topbar-icon-btn" id="settings-btn" aria-label="Settings"
+              aria-expanded="false" aria-controls="settings-menu">
+              <i class="fa-solid fa-gear" aria-hidden="true"></i>
+            </button>
+            <div class="settings-menu" id="settings-menu" hidden>
+              <button type="button" class="settings-menu-item" id="about-item">
+                <i class="fa-solid fa-circle-info settings-menu-item__icon" aria-hidden="true"></i>
+                <span>About</span>
+              </button>
+              <button type="button" class="settings-menu-item" id="devtools-item">
+                <i class="fa-solid fa-bug settings-menu-item__icon" aria-hidden="true"></i>
+                <span>Developer Tools</span>
+              </button>
+            </div>
+          </div>
+          <div class="window-controls">
+            <button type="button" class="window-control-btn" id="window-minimize-btn" aria-label="Minimize">
+              <i class="fa-regular fa-window-minimize"></i>
+            </button>
+            <button type="button" class="window-control-btn" id="window-maximize-btn" aria-label="Maximize">
+              <i class="fa-regular fa-window-maximize"></i>
+            </button>
+            <button type="button" class="window-control-btn window-control-btn--close" id="window-close-btn"
+              aria-label="Close">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ── App Body ──────────────────────────────────────────────────────── -->
+    <div class="app-body">
+
+      <!-- Sidebar navigation (populated by sidebar.js) -->
+      <nav class="sidebar" id="sidebar" aria-label="Main navigation"></nav>
+
+      <!-- Screen container (screens render here) -->
+      <div class="screen-container" id="screen-container" role="main" aria-live="polite"></div>
+
+    </div>
+  </div>
+
+  <!-- ── About Modal ───────────────────────────────────────────────────────── -->
+  <div class="modal" id="about-modal" hidden>
+    <div class="modal-backdrop" data-close-about></div>
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="about-title">
+      <header class="modal-header">
+        <h2 id="about-title">About</h2>
+        <button type="button" class="modal-close" id="about-close-btn" aria-label="Close">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </header>
+      <div class="modal-body" id="about-body"></div>
+    </div>
+  </div>
+
+  <!-- ── Foundation scripts ─────────────────────────────────────────────────── -->
+  <script src="scripts/wizard-state.js"></script>
+  <script src="scripts/toast.js"></script>
+
+  <!-- ── UI components ─────────────────────────────────────────────────────── -->
+  <script src="scripts/window-controls.js"></script>
+  <script src="scripts/about-modal.js"></script>
+
+  <!-- ── Screens (each registers itself to window.Screens) ─────────────────── -->
+  <script src="screens/dashboard.js"></script>
+  <script src="screens/connection.js"></script>
+  <script src="screens/json-source.js"></script>
+  <script src="screens/field-mapping.js"></script>
+  <script src="screens/sync-settings.js"></script>
+  <script src="screens/comparison.js"></script>
+  <script src="screens/confirmation.js"></script>
+  <script src="screens/execution.js"></script>
+  <script src="screens/results.js"></script>
+  <script src="screens/saved-configs.js"></script>
+  <script src="screens/history.js"></script>
+  <script src="screens/settings.js"></script>
+
+  <!-- ── Sidebar (uses cpilotRouter via lazy ref, must precede router) ──────── -->
+  <script src="scripts/sidebar.js"></script>
+
+  <!-- ── Router (loaded last — navigates to initial screen immediately) ──────── -->
+  <script src="scripts/router.js"></script>
+
+</body>
+
+</html>

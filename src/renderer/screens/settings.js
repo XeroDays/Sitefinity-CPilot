@@ -1,0 +1,133 @@
+(function () {
+  "use strict";
+
+  var _listeners = [];
+  function on(el, evt, fn) { el.addEventListener(evt, fn); _listeners.push({ el, evt, fn }); }
+
+  window.Screens = window.Screens || {};
+
+  window.Screens.settings = {
+    render: function (container) {
+      container.innerHTML = "";
+      var screen = document.createElement("div");
+      screen.className = "cpilot-screen";
+      container.appendChild(screen);
+
+      screen.innerHTML = `
+        <div class="cpilot-screen__header">
+          <h1 class="cpilot-screen__title">Settings</h1>
+          <p class="cpilot-screen__subtitle">Manage Sitefinity connections, preferences, and application behaviour.</p>
+        </div>
+        <div class="cpilot-screen__body" id="settings-body">
+          <div class="loading-state"><div class="spinner"></div></div>
+        </div>
+      `;
+
+      async function load() {
+        var [settingsResult, connectionsResult] = await Promise.all([
+          window.cpilot.getSettings(),
+          window.cpilot.listConnections(),
+        ]);
+
+        var settings    = settingsResult || {};
+        var connections = (connectionsResult.ok ? connectionsResult.connections : []) || [];
+
+        var body = screen.querySelector("#settings-body");
+
+        body.innerHTML = `
+          <!-- Sitefinity Connections -->
+          <div class="form-section" style="margin-bottom:1.25rem">
+            <h3 class="form-section__title">Saved Sitefinity Connections</h3>
+            <div id="connections-list">
+              ${renderConnectionsList(connections)}
+            </div>
+          </div>
+
+          <!-- General Settings -->
+          <div class="form-section" style="margin-bottom:1.25rem">
+            <h3 class="form-section__title">General</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="st-data-dir">Data Directory</label>
+                <input type="text" id="st-data-dir" class="form-input" value="${escHtml(settings.effectiveDataDir || "")}" readonly />
+                <p class="form-hint">Where Sitefinity C-Pilot stores its database, logs, and settings. Set CPILOT_DATA_DIR to override.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Appearance -->
+          <div class="form-section">
+            <h3 class="form-section__title">Appearance</h3>
+            <div class="form-group">
+              <label class="form-label" for="st-theme">Theme</label>
+              <select id="st-theme" class="form-select" style="max-width:200px">
+                <option value="system" ${settings.theme === "system" ? "selected" : ""}>System Default</option>
+                <option value="dark"   ${settings.theme === "dark"   ? "selected" : ""}>Dark</option>
+              </select>
+              <p class="form-hint">Currently the app uses a dark theme. Additional themes may be added in future versions.</p>
+            </div>
+          </div>
+        `;
+
+        var themeSelect = body.querySelector("#st-theme");
+        on(themeSelect, "change", async function () {
+          await window.cpilot.saveSettings({ theme: themeSelect.value });
+          window.cpilotToast.success("Settings saved.");
+        });
+
+        // Delete connection buttons
+        body.querySelectorAll(".st-delete-conn-btn").forEach(function (btn) {
+          on(btn, "click", async function () {
+            if (!confirm("Remove connection '" + btn.dataset.name + "'?")) return;
+            var res = await window.cpilot.deleteConnection(btn.dataset.id);
+            if (res.ok) {
+              window.cpilotToast.success("Connection removed.");
+              var res2 = await window.cpilot.listConnections();
+              var conns = res2.ok ? res2.connections : [];
+              var listEl = body.querySelector("#connections-list");
+              if (listEl) listEl.innerHTML = renderConnectionsList(conns);
+            } else {
+              window.cpilotToast.error("Could not remove: " + res.error);
+            }
+          });
+        });
+      }
+
+      function renderConnectionsList(connections) {
+        if (connections.length === 0) {
+          return `<p style="color:var(--text-muted);font-size:0.875rem;margin:0">No saved connections. Connections are saved from the Connection wizard step.</p>`;
+        }
+        return `<div class="table-wrapper"><table class="data-table">
+          <thead><tr><th>Name</th><th>Endpoint</th><th>Auth</th><th>Saved</th><th></th></tr></thead>
+          <tbody>
+            ${connections.map(function (c) {
+              var date = c.updated_at ? new Date(c.updated_at).toLocaleDateString() : "—";
+              return `<tr>
+                <td style="font-weight:550">${escHtml(c.name)}</td>
+                <td class="data-table__muted data-table__truncate" style="max-width:250px">${escHtml(c.api_endpoint)}</td>
+                <td class="data-table__muted">${escHtml(c.auth_type)}</td>
+                <td class="data-table__muted">${escHtml(date)}</td>
+                <td>
+                  <button type="button" class="data-table__action-btn st-delete-conn-btn" data-id="${escHtml(c.id)}" data-name="${escHtml(c.name)}" style="color:var(--badge-delete-text)">
+                    <i class="fa-solid fa-trash" aria-hidden="true"></i> Remove
+                  </button>
+                </td>
+              </tr>`;
+            }).join("")}
+          </tbody>
+        </table></div>`;
+      }
+
+      load();
+    },
+
+    destroy: function () {
+      _listeners.forEach(function (l) { l.el.removeEventListener(l.evt, l.fn); });
+      _listeners = [];
+    },
+  };
+
+  function escHtml(s) {
+    return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+})();
