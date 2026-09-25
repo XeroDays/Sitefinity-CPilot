@@ -349,9 +349,12 @@
         buildMappings(moduleInfo.fields, jsonSource.detectedFields);
       });
 
-      // ── Start: restore saved mappings or auto-map ───────────────────────────
+      // ── Start: rebuild from current JSON, or restore only if still valid ───
       var savedMappings = state.fieldMappings;
-      if (savedMappings && savedMappings.length > 0) {
+      var canRestore = savedMappings && savedMappings.length > 0 &&
+        mappingsMatchCurrentSource(savedMappings, jsonSource);
+
+      if (canRestore) {
         _mappings    = savedMappings;
         _identityKey = autoSelectIdentity(_mappings, state.syncSettings.matchingKey);
         loadingDiv.style.display = "none";
@@ -361,6 +364,9 @@
         updateCounts(_mappings);
         applyIdentityState();
       } else {
+        if (savedMappings && savedMappings.length > 0) {
+          window.wizardState.setFieldMappings(null);
+        }
         buildMappings(moduleInfo.fields, jsonSource.detectedFields);
       }
     },
@@ -370,6 +376,16 @@
       _listeners = [];
     },
   };
+
+  /** True when every mapped JSON property still exists on the current source. */
+  function mappingsMatchCurrentSource(mappings, jsonSource) {
+    var names = {};
+    (jsonSource.detectedFields || []).forEach(function (f) { names[f.name] = true; });
+    return mappings.every(function (m) {
+      if (!m || !m.jsonProperty) return true;
+      return !!names[m.jsonProperty];
+    });
+  }
 
   function escHtml(s) {
     return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");

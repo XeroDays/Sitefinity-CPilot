@@ -64,18 +64,21 @@
       });
 
       async function runComparison() {
-        // Use existing result if available
-        var existing = state.comparisonResult;
+        // Reuse only when upstream left comparisonResult intact (back/forward
+        // without changing JSON, mappings, or sync settings). setJsonSource
+        // clears the plan so a replaced/reloaded file always triggers a fresh run.
+        var live = window.wizardState.get();
+        var existing = live.comparisonResult;
         if (existing) {
           window.cpilot.offSyncProgress(_progressHandler);
           renderResult(existing);
           return;
         }
 
-        var conn     = state.connection;
-        var src      = state.jsonSource;
-        var settings = state.syncSettings;
-        var mappings = state.fieldMappings || [];
+        var conn     = live.connection;
+        var src      = live.jsonSource;
+        var settings = live.syncSettings;
+        var mappings = live.fieldMappings || [];
 
         if (!conn || !src || !settings) {
           showError("Missing wizard data. Please restart the operation.");

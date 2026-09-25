@@ -17,6 +17,10 @@ The version must match the `"version"` field in `package.json`.
 
 ## [Unreleased]
 
+### Fixed
+
+- Changing or reloading the JSON source no longer leaves later wizard steps on the old file. Field Mapping, Sync Settings identity checks, Data Comparison, and Confirmation rebuild from the new JSON
+
 ## [1.0.0] - 2026-09-25
 
 ### Added

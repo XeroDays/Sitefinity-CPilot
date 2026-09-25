@@ -21,12 +21,12 @@
 - `L62` : Splash Screen
 - `L69` : Application Layout
 - `L87` : Screens and Router
-- `L125`: IPC
-- `L148`: Services (main process)
-- `L163`: Storage and logging
-- `L169`: Database (SQLite)
-- `L189`: Tests and tooling
-- `L200`: Versioning a new release
+- `L126`: IPC
+- `L149`: Services (main process)
+- `L164`: Storage and logging
+- `L170`: Database (SQLite)
+- `L190`: Tests and tooling
+- `L201`: Versioning a new release
 
 ## Overview
 
@@ -100,6 +100,7 @@ The gear menu Preferences item opens the Settings screen. That screen shows the 
 - `window.wizardState` — in-memory store for the active wizard operation.
 - Fields: `connection`, `moduleInfo`, `jsonSource`, `fieldMappings`, `syncSettings`, `comparisonResult`, `selectedRecordIds`, `operationId`, `operationName`, `savedConfigId`.
 - Cleared by `window.wizardState.reset()`.
+- `setJsonSource` replaces the document and refreshes every later step: clears `fieldMappings`, `comparisonResult`, `selectedRecordIds`, and `operationId`, and drops `matchingKey` if it is no longer a Sitefinity module field (sync mode/toggles are kept). `setFieldMappings` and `setSyncSettings` also clear the comparison plan. Field Mapping rebuilds from the new fields; Data Comparison reruns when its cache was cleared.
 
 **Wizard progress bar** (`window.buildWizardProgress(activeStepName)` — exported from `connection.js`):
 - Renders a 8-step horizontal progress bar at the top of every wizard screen.

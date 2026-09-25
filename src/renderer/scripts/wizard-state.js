@@ -72,6 +72,28 @@
 
   var _state = JSON.parse(JSON.stringify(DEFAULT_STATE));
 
+  /** Clears plan/execution state derived from JSON + mappings + settings. */
+  function clearDownstreamPlan() {
+    _state.comparisonResult = null;
+    _state.selectedRecordIds = null;
+    _state.operationId = null;
+  }
+
+  /**
+   * Drop matchingKey when it is no longer a Sitefinity module field.
+   * Mode/toggles are independent of the JSON document and are kept.
+   */
+  function pruneMatchingKeyIfInvalid() {
+    var key = _state.syncSettings && _state.syncSettings.matchingKey;
+    if (!key) return;
+    var fields = _state.moduleInfo && _state.moduleInfo.fields;
+    if (!fields || !fields.length) return;
+    var stillValid = fields.some(function (f) { return f.name === key; });
+    if (!stillValid) {
+      _state.syncSettings = Object.assign({}, _state.syncSettings, { matchingKey: "" });
+    }
+  }
+
   var wizardState = {
     get: function () {
       return _state;
@@ -102,18 +124,27 @@
           _state.syncSettings = Object.assign({}, _state.syncSettings, { matchingKey: info.fields[0].name });
         }
       }
+      pruneMatchingKeyIfInvalid();
     },
 
     setJsonSource: function (source) {
       _state.jsonSource = source;
+
+      // Any successful parse (new file or same path reloaded) replaces the
+      // document and must not leave later steps showing the previous file.
+      clearDownstreamPlan();
+      _state.fieldMappings = null;
+      pruneMatchingKeyIfInvalid();
     },
 
     setFieldMappings: function (mappings) {
       _state.fieldMappings = mappings;
+      clearDownstreamPlan();
     },
 
     setSyncSettings: function (settings) {
       _state.syncSettings = Object.assign({}, _state.syncSettings, settings);
+      clearDownstreamPlan();
     },
 
     setComparisonResult: function (result) {
