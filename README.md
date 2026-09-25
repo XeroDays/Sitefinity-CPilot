@@ -6,6 +6,15 @@ Sitefinity C-Pilot is a desktop tool for creating, injecting, modifying, and upd
 
 This first version is the application shell: a splash screen and a single main menu. Sitefinity connections and JSON operations are not included yet.
 
+## Gallery
+
+![Screenshot 1](.github/images/Screenshot_1.png)
+![Screenshot 2](.github/images/Screenshot_2.png)
+![Screenshot 3](.github/images/Screenshot_3.png)
+![Screenshot 4](.github/images/Screenshot_4.png)
+![Screenshot 5](.github/images/Screenshot_5.png)
+![Screenshot 6](.github/images/Screenshot_6.png)
+
 ## Getting started
 
 ```bash
