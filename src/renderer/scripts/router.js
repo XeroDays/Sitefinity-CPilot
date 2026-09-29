@@ -42,6 +42,9 @@
 
   // ── Navigate ───────────────────────────────────────────────────────────────
   function navigateTo(name, params) {
+    if (typeof window.blockIfForceUpdate === "function" && window.blockIfForceUpdate()) {
+      return;
+    }
     var screenDef = window.Screens[name];
     if (!screenDef) {
       console.error("[router] Unknown screen:", name);

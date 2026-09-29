@@ -246,7 +246,51 @@ body {
 .app-topbar__right {
   display: flex;
   align-items: center;
+  gap: 0.35rem;
   -webkit-app-region: no-drag;
+}
+
+#btn-new-release {
+  color: var(--accent);
+  border: 1px solid var(--border-strong);
+}
+
+.release-overlay.is-force-update {
+  z-index: 80;
+}
+
+.release-notes {
+  margin: 0.75rem 0 0;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  overflow: auto;
+}
+
+.release-download-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.release-progress-track {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--bg-input, var(--hover-wash));
+  overflow: hidden;
+}
+
+.release-progress-bar {
+  width: 0;
+  height: 100%;
+  background: var(--accent);
+}
+
+.release-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
 }
 
 .topbar-icon-btn,

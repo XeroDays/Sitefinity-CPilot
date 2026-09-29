@@ -13,4 +13,4 @@ alwaysApply: true
 - When behavior is added, changed, or fixed, update `CHANGELOG.md` under `[Unreleased]` in `Added`, `Changed`, or `Fixed`. Write a short user-facing line, not an implementation note. The task is not done until that line exists.
 - When the shell, renderer, IPC, or storage flow changes, update the matching section in `context.md` in the same change.
 
-Git history and GitHub releases stay with the user. That rule is in `no-git-operations.mdc`. A request to create or generate a release is file edits only: `package.json`, root `package-lock.json` version, `CHANGELOG.md`, and the version note in `context.md`.
+Git history and GitHub releases stay with the user. That rule is in `no-git-operations.mdc`. A request to create or generate a release is file edits only: `package.json`, root `package-lock.json` version, `BUILD_VERSION` in `src/main/services/license-service.js`, `CHANGELOG.md`, and the version note in `context.md`.

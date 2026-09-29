@@ -3,6 +3,7 @@ const crypto = require("crypto");
 const path = require("path");
 const fs = require("fs");
 const { getLogLevel } = require("../services/app-logger");
+const licenseService = require("../services/license-service");
 
 function buildAppInfo() {
   let pkg;
@@ -50,7 +51,7 @@ function buildAppInfo() {
     productName: pkg.build?.productName || "Sitefinity C-Pilot",
     edition: "Developer Preview",
     version,
-    build: version,
+    build: licenseService.getBuildVersion(),
     electron: process.versions.electron || "Unknown",
     instance,
     description: pkg.description || "",

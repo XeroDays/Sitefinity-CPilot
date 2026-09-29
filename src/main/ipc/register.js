@@ -9,6 +9,7 @@ const { registerJsonHandlers }       = require("./json-handlers");
 const { registerSyncHandlers }       = require("./sync-handlers");
 const { registerConfigHandlers }     = require("./config-handlers");
 const { registerHistoryHandlers }    = require("./history-handlers");
+const licenseService = require("../services/license-service");
 
 let ipcHandlersRegistered = false;
 
@@ -75,6 +76,22 @@ function registerIpcHandlers() {
     settingsStore.saveSettings(patch);
     return settingsStore.getPublicSettings();
   }));
+
+  ipcMain.handle(channels.GET_LICENSE_UPDATE, async () => {
+    return licenseService.getCachedUpdate();
+  });
+
+  ipcMain.handle(channels.DOWNLOAD_UPDATE, wrapIpcHandler("DOWNLOAD_UPDATE", async (event, downloadUrl, filename) => {
+    return licenseService.downloadUpdate(downloadUrl, filename, event.sender);
+  }));
+
+  ipcMain.handle(channels.INSTALL_UPDATE, wrapIpcHandler("INSTALL_UPDATE", async (_event, filename) => {
+    return licenseService.installUpdate(filename);
+  }));
+
+  ipcMain.handle(channels.CHECK_UPDATE_FILE, async (_event, filename) => {
+    return licenseService.checkUpdateFile(filename);
+  });
 
   // ── Domain handlers ───────────────────────────────────────────────────────
   registerConnectionHandlers();

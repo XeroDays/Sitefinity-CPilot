@@ -51,4 +51,12 @@ module.exports = {
   GET_OPERATION:          "cpilot:get-operation",
   GET_OPERATION_ITEMS:    "cpilot:get-operation-items",
   GET_DASHBOARD_STATS:    "cpilot:get-dashboard-stats",
+
+  // ── License / version gate ────────────────────────────────────────────────
+  LICENSE_UPDATE:            "cpilot:license-update",
+  GET_LICENSE_UPDATE:        "cpilot:get-license-update",
+  DOWNLOAD_UPDATE:           "cpilot:download-update",
+  LICENSE_DOWNLOAD_PROGRESS: "cpilot:license-download-progress",
+  INSTALL_UPDATE:            "cpilot:install-update",
+  CHECK_UPDATE_FILE:         "cpilot:check-update-file",
 };

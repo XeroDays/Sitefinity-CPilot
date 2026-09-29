@@ -127,6 +127,10 @@ body {
   color: rgba(255, 255, 255, 0.65);
 }
 
+.splash-status-text--denied {
+  color: #fca5a5;
+}
+
 .splash-version-label {
   position: absolute;
   left: 1.5rem;

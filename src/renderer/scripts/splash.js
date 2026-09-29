@@ -18,9 +18,11 @@
     window.cpilot.onSplashStatus((payload) => {
       const text = typeof payload === "string" ? payload : payload && payload.text;
       const loading = typeof payload === "string" ? true : payload?.loading !== false;
+      const denied = typeof payload === "object" && payload?.denied === true;
 
       if (statusText && typeof text === "string" && text) {
         statusText.textContent = text;
+        statusText.classList.toggle("splash-status-text--denied", denied);
       }
       if (spinner) {
         spinner.classList.toggle("is-hidden", !loading);

@@ -17,6 +17,10 @@ The version must match the `"version"` field in `package.json`.
 
 ## [Unreleased]
 
+### Added
+
+- Startup checks the Softasium license service. The server can block access, and a New release button appears when a newer build is available
+
 ## [1.1.0] - 2026-09-29
 
 ### Added

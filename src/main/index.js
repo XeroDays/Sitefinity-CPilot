@@ -11,7 +11,8 @@ if (process.platform === "win32" && app.isPackaged) {
 function sendSplashStatus(splash, text, options = {}) {
   if (splash && !splash.isDestroyed() && splash.webContents && !splash.webContents.isDestroyed()) {
     const loading = options.loading !== false;
-    splash.webContents.send(channels.SPLASH_STATUS, { text, loading });
+    const denied = options.denied === true;
+    splash.webContents.send(channels.SPLASH_STATUS, { text, loading, denied });
   }
 }
 
@@ -86,6 +87,9 @@ async function bootstrap() {
   sendSplashStatus(splash, "Starting…");
   log.mark('sendSplashStatus "Starting…"');
 
+  const licenseService = require("./services/license-service");
+  const prefetchPromise = licenseService.prefetchRegistrationData();
+
   sendSplashStatus(splash, "Preparing…");
   log.mark('sendSplashStatus "Preparing…"');
 
@@ -95,12 +99,47 @@ async function bootstrap() {
 
   const main = createMainWindow();
 
+  sendSplashStatus(splash, "Checking for updates…");
+  log.mark('sendSplashStatus "Checking for updates…"');
+
+  const [licenseResult] = await Promise.all([
+    (async () => {
+      await prefetchPromise;
+      const registerStartedAt = log.enter("licenseService.register");
+      const result = await licenseService.register();
+      log.exit("licenseService.register", registerStartedAt, {
+        accessGranted: result.accessGranted,
+        fromCache: result.fromCache,
+        updateAvailable: result.updateAvailable,
+        localBuild: result.localBuild,
+        remoteBuild: result.remoteBuild,
+        forceUpdate: result.forceUpdate,
+      });
+      return result;
+    })(),
+    waitForWebContentsLoad(main),
+  ]);
+
+  if (!licenseResult.accessGranted) {
+    log.warn("access denied — staying on splash", {
+      fromCache: licenseResult.fromCache,
+      error: licenseResult.error || null,
+    });
+    sendSplashStatus(splash, "Access denied, please contact customer service.", {
+      loading: false,
+      denied: true,
+    });
+    if (!main.isDestroyed()) main.destroy();
+    log.exit("bootstrap", bootstrapStartedAt, { outcome: "access-denied" });
+    return;
+  }
+
   sendSplashStatus(splash, "Loading menu…");
   log.mark('sendSplashStatus "Loading menu…"');
 
-  const mainLoadStartedAt = log.enter("waitForWebContentsLoad(main)");
-  await waitForWebContentsLoad(main);
-  log.exit("waitForWebContentsLoad(main)", mainLoadStartedAt);
+  if (!main.isDestroyed() && main.webContents && !main.webContents.isDestroyed()) {
+    main.webContents.send(channels.LICENSE_UPDATE, licenseResult);
+  }
 
   if (!splash.isDestroyed()) {
     splash.close();

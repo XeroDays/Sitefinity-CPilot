@@ -26,6 +26,9 @@
           <span class="app-breadcrumb__current" id="breadcrumb-current">Dashboard</span>
         </nav>
         <div class="app-topbar__right">
+          <button type="button" class="btn btn-ghost btn-sm" id="btn-new-release" hidden>
+            New release
+          </button>
           <div class="settings-dropdown">
             <button type="button" class="topbar-icon-btn" id="settings-btn" aria-label="Settings"
               aria-expanded="false" aria-controls="settings-menu">
@@ -74,6 +77,28 @@
     </div>
   </div>
 
+  <div class="modal release-overlay" id="release-overlay" hidden>
+    <div class="modal-backdrop" data-release-backdrop></div>
+    <div class="modal-content release-dialog" role="dialog" aria-modal="true" aria-labelledby="release-title">
+      <div class="modal-header">
+        <h2 id="release-title">New release</h2>
+        <button type="button" class="modal-close" id="btn-release-close" aria-label="Close">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+      </div>
+      <p class="release-notes" id="release-notes"></p>
+      <div class="release-download-progress" id="release-download-progress" hidden>
+        <div class="release-progress-track">
+          <div class="release-progress-bar" id="release-progress-bar"></div>
+        </div>
+        <span id="release-download-percent">0%</span>
+      </div>
+      <div class="release-dialog__actions">
+        <button type="button" class="btn btn-primary" id="btn-release-download">Download Now</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ── About Modal ───────────────────────────────────────────────────────── -->
   <div class="modal" id="about-modal" hidden>
     <div class="modal-backdrop" data-close-about></div>
@@ -95,6 +120,7 @@
   <!-- ── UI components ─────────────────────────────────────────────────────── -->
   <script src="scripts/window-controls.js"></script>
   <script src="scripts/about-modal.js"></script>
+  <script src="scripts/release-update-panel.js"></script>
 
   <!-- ── Screens (each registers itself to window.Screens) ─────────────────── -->
   <script src="screens/dashboard.js"></script>

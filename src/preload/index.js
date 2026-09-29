@@ -51,6 +51,13 @@ const CH = {
   GET_OPERATION:         "cpilot:get-operation",
   GET_OPERATION_ITEMS:   "cpilot:get-operation-items",
   GET_DASHBOARD_STATS:   "cpilot:get-dashboard-stats",
+
+  LICENSE_UPDATE:            "cpilot:license-update",
+  GET_LICENSE_UPDATE:        "cpilot:get-license-update",
+  DOWNLOAD_UPDATE:           "cpilot:download-update",
+  LICENSE_DOWNLOAD_PROGRESS: "cpilot:license-download-progress",
+  INSTALL_UPDATE:            "cpilot:install-update",
+  CHECK_UPDATE_FILE:         "cpilot:check-update-file",
 };
 
 ipcRenderer.on(CH.RENDERER_FETCH, async (_event, payload) => {
@@ -150,4 +157,19 @@ contextBridge.exposeInMainWorld("cpilot", {
   getOperation:        (id)   => ipcRenderer.invoke(CH.GET_OPERATION, id),
   getOperationItems:   (id)   => ipcRenderer.invoke(CH.GET_OPERATION_ITEMS, id),
   getDashboardStats:   ()     => ipcRenderer.invoke(CH.GET_DASHBOARD_STATS),
+
+  getLicenseUpdate: () => ipcRenderer.invoke(CH.GET_LICENSE_UPDATE),
+  downloadUpdate: (downloadUrl, filename) => ipcRenderer.invoke(CH.DOWNLOAD_UPDATE, downloadUrl, filename),
+  installUpdate: (filename) => ipcRenderer.invoke(CH.INSTALL_UPDATE, filename),
+  checkUpdateFile: (filename) => ipcRenderer.invoke(CH.CHECK_UPDATE_FILE, filename),
+  onLicenseUpdate(callback) {
+    const subscription = (_event, result) => callback(result);
+    ipcRenderer.on(CH.LICENSE_UPDATE, subscription);
+    return () => ipcRenderer.removeListener(CH.LICENSE_UPDATE, subscription);
+  },
+  onLicenseDownloadProgress(callback) {
+    const subscription = (_event, progress) => callback(progress);
+    ipcRenderer.on(CH.LICENSE_DOWNLOAD_PROGRESS, subscription);
+    return () => ipcRenderer.removeListener(CH.LICENSE_DOWNLOAD_PROGRESS, subscription);
+  },
 });

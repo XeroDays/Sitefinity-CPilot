@@ -9,7 +9,7 @@
 - After any update in this file, refresh the index line numbers so the index always matches the current file.
 - **Changelog (mandatory):** Whenever software behavior is added, changed, or fixed, update `CHANGELOG.md` under `[Unreleased]` in the matching section (`Added`, `Changed`, or `Fixed`). Write **high-level, short, easy-to-understand** entries — say what changed for users, not implementation details or long technical explanations. Do not consider a task complete until the changelog reflects the work.
 - **Git (mandatory — ABSOLUTE NEVER):** **NEVER, under ANY circumstances**, run `git commit`, `git tag`, `git push`, or any command that creates or pushes a git commit, tag, or GitHub release — **not even if the user explicitly asks**. This is a hard rule with zero exceptions. All release work is **file edits only** (`package.json`, `package-lock.json`, `CHANGELOG.md`, `context.md`). After editing, tell the user exactly which files changed and let them handle all git operations manually. Do not use the `gh` CLI, GitHub API, or any tool to create releases, tags, or push code.
-- **Create / generate release (agent rule):** When the user asks to **create a release** or **generate a release**, that means **file edits only** — nothing more: bump the software version in `package.json` and `package-lock.json` (root `"version"` fields only — do not change dependency versions), move `[Unreleased]` entries in `CHANGELOG.md` into a new versioned section with the release date, update `context.md` (current version reference and any affected notes), and refresh the index line numbers in `context.md`. **Stop there.** Do **not** run any git commands.
+- **Create / generate release (agent rule):** When the user asks to **create a release** or **generate a release**, that means **file edits only** — nothing more: bump the software version in `package.json` and `package-lock.json` (root `"version"` fields only — do not change dependency versions), increment `BUILD_VERSION` in `src/main/services/license-service.js` by 1, move `[Unreleased]` entries in `CHANGELOG.md` into a new versioned section with the release date, update `context.md` (current version reference, `BUILD_VERSION`, and any affected notes), and refresh the index line numbers in `context.md`. **Stop there.** Do **not** run any git commands.
 
 ## Index (Line Numbers)
 
@@ -17,16 +17,16 @@
 - `L14` : Index (Line Numbers)
 - `L31` : Overview
 - `L39` : Naming
-- `L49` : Startup
-- `L62` : Splash Screen
-- `L69` : Application Layout
-- `L87` : Screens and Router
-- `L126`: IPC
-- `L149`: Services (main process)
-- `L164`: Storage and logging
-- `L170`: Database (SQLite)
-- `L190`: Tests and tooling
-- `L201`: Versioning a new release
+- `L50` : Startup
+- `L63` : Splash Screen
+- `L70` : Application Layout
+- `L88` : Screens and Router
+- `L127`: IPC
+- `L152`: Services (main process)
+- `L170`: Storage and logging
+- `L176`: Database (SQLite)
+- `L196`: Tests and tooling
+- `L207`: Versioning a new release
 
 ## Overview
 
@@ -41,6 +41,7 @@ Stack: vanilla JavaScript, no bundler. Process split is `src/main`, `src/preload
 - npm name: `sitefinity-c-pilot`
 - Product name: `Sitefinity C-Pilot`
 - App id: `com.softasium.sitefinity-cpilot`
+- License AppID: `SitefinityCPilot` (`BUILD_VERSION` is `1` in `license-service.js`)
 - Renderer API: `window.cpilot`
 - IPC prefix: `cpilot:`
 - Data folder: `Documents/Sitefinity CPilot`
@@ -52,19 +53,19 @@ Stack: vanilla JavaScript, no bundler. Process split is `src/main`, `src/preload
 
 1. Register splash IPC (`register-splash-handlers.js`).
 2. Create and show the frameless splash window.
-3. Send splash status **Starting…**, then **Preparing…**.
-4. On the next event-loop turn, register the remaining IPC handlers, **initialise the SQLite database**, and create the main window (still hidden).
-5. Send splash status **Loading menu…** and wait until the main window finishes loading.
-6. Close the splash, then maximize, show, and focus the main window.
+3. Send splash status **Starting…**, then prefetch license device info while **Preparing…** loads IPC, the SQLite database, and the hidden main window.
+4. Send **Checking for updates…** and POST the Softasium register API (`AppID` `SitefinityCPilot`, local `BUILD_VERSION`, package version).
+5. If `status` is not granted, keep the splash on “Access denied, please contact customer service.”, destroy the main window, and stop. A failed call uses the last encrypted register response; with no cache, access is denied.
+6. If granted, send **Loading menu…** and `LICENSE_UPDATE`, then close the splash and maximize, show, and focus the main window. A higher remote `buildVersion` shows the header **New release** button. `forceUpdate` opens that dialog and blocks navigation until the user installs.
 
-There is no license gate. Closing the last window quits the app on Windows.
+Closing the last window quits the app on Windows.
 
 ## Splash Screen
 
 - Window: `src/main/windows/splash-window.js`. Frameless, fixed size, `contextIsolation: true`, preload `src/preload/splash-preload.js`.
 - Page: `src/renderer/splash.html`, styles `src/renderer/styles/splash.css`, script `src/renderer/scripts/splash.js`.
 - UI: logo, product name, spinner, status text, version label, close button.
-- Close calls `window.cpilot.quitApp()`. Version comes from `getAppInfo()`.
+- Close calls `window.cpilot.quitApp()`. Version comes from `getAppInfo()`. A denied license status hides the spinner and marks the status text.
 
 ## Application Layout
 
@@ -82,7 +83,7 @@ Styles:
 - `src/renderer/styles/app.css`     — base layout, header, sidebar, toast; dark tokens on `:root`, light tokens on `[data-theme="light"]`
 - `src/renderer/styles/screens.css` — all screen-specific styles (wizard, forms, tables, badges, etc.)
 
-The gear menu Preferences item opens the Settings screen. That screen shows the theme dropdown (Dark or Light); Apply sets `data-theme` and saves the choice.
+The gear menu Preferences item opens the Settings screen. That screen shows the theme dropdown (Dark or Light); Apply sets `data-theme` and saves the choice. The header **New release** button stays hidden until the license response reports a newer build.
 
 ## Screens and Router
 
@@ -121,7 +122,7 @@ The gear menu Preferences item opens the Settings screen. That screen shows the 
 - `settings.js`      — manage connections, Preferences (Dark / Light theme), data directory
 
 **Script load order** in `index.html`:
-`theme.js` → `wizard-state.js` → `toast.js` → `window-controls.js` → `about-modal.js` → all screens → `sidebar.js` → `router.js` (last, triggers initial navigation). `theme.js` sets `data-theme` on the document from saved settings (`light`, otherwise dark, including `system`).
+`theme.js` → `wizard-state.js` → `toast.js` → `window-controls.js` → `about-modal.js` → `release-update-panel.js` → all screens → `sidebar.js` → `router.js` (last, triggers initial navigation). `theme.js` sets `data-theme` on the document from saved settings (`light`, otherwise dark, including `system`).
 
 ## IPC
 
@@ -143,6 +144,8 @@ Channel names live in `src/shared/ipc/channels.js`. Preload (`src/preload/index.
 
 **History**: LIST_OPERATIONS, GET_OPERATION, GET_OPERATION_ITEMS, GET_DASHBOARD_STATS.
 
+**License**: LICENSE_UPDATE (main→renderer), GET_LICENSE_UPDATE, DOWNLOAD_UPDATE, INSTALL_UPDATE, CHECK_UPDATE_FILE, LICENSE_DOWNLOAD_PROGRESS.
+
 IPC handlers are registered in `src/main/ipc/register.js` which imports:
 - `connection-handlers.js`, `json-handlers.js`, `sync-handlers.js`, `config-handlers.js`, `history-handlers.js`.
 
@@ -160,6 +163,9 @@ IPC handlers are registered in `src/main/ipc/register.js` which imports:
 | `app-logger.js`         | electron-log wrapper |
 | `app-paths.js`          | Resolves data directory |
 | `settings-store.js`     | Reads/writes settings.json |
+| `license-service.js`    | Softasium register, access gate, update check, installer download. `SoftwareAppID` is `SitefinityCPilot`. `BUILD_VERSION` is `1` |
+| `license-cache-store.js`| Encrypted last register response in Electron user data (`register-response.enc`) |
+| `device-info-builder.js`| Windows MachineGuid and device string for registration |
 
 ## Storage and logging
 
@@ -206,7 +212,8 @@ When asked to create or generate a release, edit files only:
 
 1. Bump `package.json` `"version"`.
 2. Bump the root `"version"` fields in `package-lock.json` only.
-3. Move `CHANGELOG.md` `[Unreleased]` entries into a dated version section.
-4. Update the version mentioned in this file and refresh the index line numbers.
+3. Increment `BUILD_VERSION` in `src/main/services/license-service.js` by 1. The license server compares that integer, not the semver string.
+4. Move `CHANGELOG.md` `[Unreleased]` entries into a dated version section.
+5. Update the version and `BUILD_VERSION` mentioned in this file and refresh the index line numbers.
 
 Do not run git. Tell the user which files changed.
