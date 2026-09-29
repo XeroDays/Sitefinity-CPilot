@@ -163,6 +163,52 @@
         // Issues from server are about the old matchingKey — we handle identity ourselves
       }
 
+      function statusBadgeHtml(m) {
+        if (m.ignore) return '<span class="badge badge--skip">Ignored</span>';
+        if (!m.jsonProperty) return '<span class="badge badge--conflict">Unmapped</span>';
+        if (m.matchType === "exact") return '<span class="badge badge--success">Exact</span>';
+        if (m.matchType === "manual") return '<span class="badge badge--update">Manual</span>';
+        return '<span class="badge badge--update">Auto</span>';
+      }
+
+      function syncIgnoreHeader() {
+        var allCb = tableWrapper.querySelector(".fm-ignore-all");
+        if (!allCb) return;
+        var ignored = _mappings.filter(function (m) { return m.ignore; }).length;
+        allCb.indeterminate = ignored > 0 && ignored < _mappings.length;
+        allCb.checked = _mappings.length > 0 && ignored === _mappings.length;
+      }
+
+      function refreshMappingRow(idx) {
+        var m = _mappings[idx];
+        var row = tableWrapper.querySelector("tr[data-idx='" + idx + "']");
+        if (!row || !m) return;
+        row.classList.toggle("opacity-50", !!m.ignore);
+        row.style.opacity = "";
+        var statusCell = row.querySelector("td:nth-child(4)");
+        if (statusCell) statusCell.innerHTML = statusBadgeHtml(m);
+        var cb = row.querySelector(".fm-ignore-cb");
+        if (cb) cb.checked = !!m.ignore;
+      }
+
+      function reconcileIdentity(idx) {
+        var m = _mappings[idx];
+        if (!m) return;
+        if (m.ignore && m.sitefinityField === _identityKey) {
+          _identityKey = autoSelectIdentity(_mappings, null);
+        }
+        if (!m.ignore && !_identityKey && m.jsonProperty) {
+          _identityKey = m.sitefinityField;
+        }
+      }
+
+      function finishMappingChange() {
+        applyIdentityState();
+        updateCounts(_mappings);
+        renderPreview(jsonSource.records, _mappings);
+        syncIgnoreHeader();
+      }
+
       // ── Render the mapping table ────────────────────────────────────────────
       function renderTable(sfFields, jsonFields, mappings) {
         var jsonOptions = jsonFields.map(function (f) { return f.name; });
@@ -175,7 +221,10 @@
                 <th>Type</th>
                 <th>JSON Property</th>
                 <th>Status</th>
-                <th style="width:80px">Ignore</th>
+                <th style="width:80px;text-align:center">
+                  <input type="checkbox" class="fm-ignore-all" aria-label="Ignore all fields" title="Ignore all fields"
+                    style="accent-color:var(--accent);width:15px;height:15px;cursor:pointer" />
+                </th>
                 <th style="width:80px;text-align:center" title="Select the unique identifier field used to match JSON records with Sitefinity items">Identity</th>
               </tr>
             </thead>
@@ -187,13 +236,7 @@
               return `<option value="${escHtml(o)}" ${m.jsonProperty === o ? "selected" : ""}>${escHtml(o)}</option>`;
             }).join("");
 
-          var statusBadge = m.ignore
-            ? '<span class="badge badge--skip">Ignored</span>'
-            : m.jsonProperty
-              ? (m.matchType === "exact"
-                  ? '<span class="badge badge--success">Exact</span>'
-                  : '<span class="badge badge--update">Auto</span>')
-              : '<span class="badge badge--conflict">Unmapped</span>';
+          var statusBadge = statusBadgeHtml(m);
 
           var isEligible  = !m.ignore && m.jsonProperty;
           var isIdentity  = m.sitefinityField === _identityKey;
@@ -231,32 +274,17 @@
             var idx = parseInt(sel.dataset.idx, 10);
             _mappings[idx].jsonProperty = sel.value || null;
             _mappings[idx].matchType    = sel.value ? "manual" : "none";
+            _mappings[idx].ignore       = !sel.value;
+            refreshMappingRow(idx);
 
-            // Update status badge in same row
-            var row = tableWrapper.querySelector("tr[data-idx='" + idx + "']");
-            if (row) {
-              var statusCell = row.querySelector("td:nth-child(4)");
-              if (statusCell) {
-                statusCell.innerHTML = _mappings[idx].ignore
-                  ? '<span class="badge badge--skip">Ignored</span>'
-                  : _mappings[idx].jsonProperty
-                    ? '<span class="badge badge--update">Manual</span>'
-                    : '<span class="badge badge--conflict">Unmapped</span>';
-              }
-            }
-
-            // If this field just got unmapped and it was the identity, re-auto-select
             if (!sel.value && _mappings[idx].sitefinityField === _identityKey) {
               _identityKey = autoSelectIdentity(_mappings, null);
             }
-            // If a previously unmapped field now has a value and no identity exists, claim it
             if (sel.value && !_identityKey) {
               _identityKey = _mappings[idx].sitefinityField;
             }
 
-            applyIdentityState();
-            updateCounts(_mappings);
-            renderPreview(jsonSource.records, _mappings);
+            finishMappingChange();
           });
         });
 
@@ -265,22 +293,29 @@
           on(cb, "change", function () {
             var idx = parseInt(cb.dataset.idx, 10);
             _mappings[idx].ignore = cb.checked;
-            var row = tableWrapper.querySelector("tr[data-idx='" + idx + "']");
-            if (row) row.style.opacity = cb.checked ? "0.4" : "";
-
-            // If identity field gets ignored, re-auto-select
-            if (cb.checked && _mappings[idx].sitefinityField === _identityKey) {
-              _identityKey = autoSelectIdentity(_mappings, null);
-            }
-            // If un-ignored and no identity, auto-select
-            if (!cb.checked && !_identityKey && _mappings[idx].jsonProperty) {
-              _identityKey = _mappings[idx].sitefinityField;
-            }
-
-            applyIdentityState();
-            updateCounts(_mappings);
+            refreshMappingRow(idx);
+            reconcileIdentity(idx);
+            finishMappingChange();
           });
         });
+
+        var ignoreAll = tableWrapper.querySelector(".fm-ignore-all");
+        if (ignoreAll) {
+          on(ignoreAll, "change", function () {
+            var ignored = ignoreAll.checked;
+            _mappings.forEach(function (m, idx) {
+              m.ignore = ignored;
+              refreshMappingRow(idx);
+            });
+            if (ignored) {
+              _identityKey = autoSelectIdentity(_mappings, null);
+            } else if (!_identityKey) {
+              _identityKey = autoSelectIdentity(_mappings, null);
+            }
+            finishMappingChange();
+          });
+        }
+        syncIgnoreHeader();
 
         // Wire identity radios
         tableWrapper.querySelectorAll(".fm-identity-radio").forEach(function (radio) {

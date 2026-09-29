@@ -11,7 +11,7 @@
  *   sitefinityField: string,    // target field name in Sitefinity
  *   fieldType:       string,    // Sitefinity field type (from module metadata)
  *   jsonProperty:    string|null, // mapped JSON property name (null = unmapped)
- *   ignore:          boolean,   // true = skip this field during sync
+ *   ignore:          boolean,   // true = skip this field during sync; unmapped rows start ignored
  *   defaultValue:    any,       // value to use when jsonProperty is null/missing
  * }
  */
@@ -54,7 +54,7 @@ function buildMapping(sfField, jsonProperty, matchType) {
     sitefinityField: sfField.name,
     fieldType:       sfField.type || "string",
     jsonProperty:    jsonProperty || null,
-    ignore:          false,
+    ignore:          !jsonProperty,
     defaultValue:    null,
     matchType:       matchType, // 'exact' | 'case-insensitive' | 'none'
   };

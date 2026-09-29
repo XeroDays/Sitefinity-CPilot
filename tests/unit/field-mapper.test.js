@@ -64,6 +64,7 @@ test("no match produces null jsonProperty", function () {
   var m = mappings[0];
   assert.strictEqual(m.jsonProperty, null);
   assert.strictEqual(m.matchType, "none");
+  assert.strictEqual(m.ignore, true);
 });
 
 // ── applyMappings ──────────────────────────────────────────────────────────

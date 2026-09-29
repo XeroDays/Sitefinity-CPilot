@@ -34,7 +34,7 @@ Sitefinity C-Pilot is an Electron desktop app for Sitefinity CMS developers. The
 
 This is the full application with a 12-screen wizard workflow for JSON-driven Sitefinity Dynamic Module synchronisation.
 
-Stack: vanilla JavaScript, no bundler. Process split is `src/main`, `src/preload`, `src/renderer`, and `src/shared`. Current version is `1.0.0` in `package.json`.
+Stack: vanilla JavaScript, no bundler. Process split is `src/main`, `src/preload`, `src/renderer`, and `src/shared`. Current version is `1.1.0` in `package.json`.
 
 ## Naming
 
@@ -107,10 +107,10 @@ The gear menu Preferences item opens the Settings screen. That screen shows the 
 - Steps: Connection → JSON Source → Field Mapping → Sync Settings → Comparison → Confirmation → Execution → Results.
 
 **Screens** (in `src/renderer/screens/`):
-- `dashboard.js`     — stats cards, quick actions, recent operations table
+- `dashboard.js`     — quick actions, recent operations table (latest 5)
 - `connection.js`    — API endpoint entry, test connection, auth config (None, Basic, Session / Cookie, Access Key); save connection stores name/endpoint/auth type only
 - `json-source.js`   — file upload / paste, auto-parse, record path selection
-- `field-mapping.js` — mapping table with auto-suggestions and manual overrides
+- `field-mapping.js` — mapping table with auto-suggestions and manual overrides. Unmapped fields start ignored. The Ignore column header checks or clears every row
 - `sync-settings.js` — matching key, sync mode radio cards, deletion config, advanced options
 - `comparison.js`    — fetches existing records, runs comparison engine, shows filterable table + detail drawer
 - `confirmation.js`  — summary before execution, operation name field
@@ -154,7 +154,7 @@ IPC handlers are registered in `src/main/ipc/register.js` which imports:
 |------|---------|
 | `sitefinity-client.js`  | Sitefinity HTTP client. Calls run as `fetch` in the main window (so they show in DevTools) after main-process URL checks. Basic auth sends `Authorization`. Cookie auth uses the window session cookie jar. testConnection, fetchAllRecords, createItem, updateItem, deleteItem; OData pagination |
 | `json-parser.js`        | Parse, validate, detect root type, infer field types, find duplicates. Item detection walks nested objects and scores candidate arrays (any property name, any depth); nested object fields on an item are not treated as separate item lists |
-| `field-mapper.js`       | autoMap (exact + case-insensitive), applyMappings, getMatchingKeyValue, validateMappings |
+| `field-mapper.js`       | autoMap (exact + case-insensitive). Unmapped rows start ignored. applyMappings, getMatchingKeyValue, validateMappings |
 | `comparison-engine.js`  | compare() — normalise, index existing, classify each source record, detect missing |
 | `sync-executor.js`      | Sequential API execution with IPC progress events; cancel support; DB persistence |
 | `app-logger.js`         | electron-log wrapper |
@@ -200,7 +200,7 @@ Unit tests cover: `json-parser`, `field-mapper`, `comparison-engine` (including 
 
 ## Versioning a new release
 
-Current version: **1.0.0**.
+Current version: **1.1.0**.
 
 When asked to create or generate a release, edit files only:
 

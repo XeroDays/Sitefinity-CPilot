@@ -1,0 +1,16 @@
+---
+description: Read context.md first and keep it, the changelog, and the index in sync with behavior changes
+alwaysApply: true
+---
+
+# Project context
+
+`context.md` is the project reference. Read it before changing the shell, renderer, IPC, or storage, and follow it.
+
+- Use the index line numbers to jump to the relevant section. Do not scan the whole file first.
+- After editing `context.md`, refresh those index line numbers so they still match.
+- Name files in kebab-case (`AppLogger` lives in `app-logger.js`).
+- When behavior is added, changed, or fixed, update `CHANGELOG.md` under `[Unreleased]` in `Added`, `Changed`, or `Fixed`. Write a short user-facing line, not an implementation note. The task is not done until that line exists.
+- When the shell, renderer, IPC, or storage flow changes, update the matching section in `context.md` in the same change.
+
+Git history and GitHub releases stay with the user. That rule is in `no-git-operations.mdc`. A request to create or generate a release is file edits only: `package.json`, root `package-lock.json` version, `CHANGELOG.md`, and the version note in `context.md`.

@@ -17,6 +17,12 @@ The version must match the `"version"` field in `package.json`.
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-09-29
+
+### Added
+
+- Field Mapping ignores unmapped fields by default. The Ignore column header checks or clears every field
+
 ### Fixed
 
 - Changing or reloading the JSON source no longer leaves later wizard steps on the old file. Field Mapping, Sync Settings identity checks, Data Comparison, and Confirmation rebuild from the new JSON
