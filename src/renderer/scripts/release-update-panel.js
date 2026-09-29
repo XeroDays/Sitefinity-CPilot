@@ -33,7 +33,7 @@
   function applyForceChrome(force) {
     state.forceUpdate = force;
     if (modal) modal.classList.toggle("is-force-update", force);
-    if (closeBtn) closeBtn.hidden = force;
+    if (closeBtn) closeBtn.hidden = false;
   }
 
   function setActionMode(mode) {
@@ -91,7 +91,6 @@
   }
 
   function closeModal() {
-    if (state.forceUpdate) return;
     if (modal) modal.hidden = true;
   }
 
@@ -127,7 +126,6 @@
 
   if (modal) {
     modal.addEventListener("click", (event) => {
-      if (state.forceUpdate) return;
       if (event.target === modal || event.target.hasAttribute("data-release-backdrop")) {
         closeModal();
       }
@@ -178,7 +176,7 @@
 
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") return;
-    if (!modal || modal.hidden || state.forceUpdate) return;
+    if (!modal || modal.hidden) return;
     closeModal();
   });
 

@@ -57,7 +57,7 @@ Stack: vanilla JavaScript, no bundler. Process split is `src/main`, `src/preload
 3. Send splash status **Starting…**, then prefetch license device info while **Preparing…** loads IPC, the SQLite database, and the hidden main window.
 4. Send **Checking for updates…** and POST the Softasium register API (`AppID` `SitefinityCPilot`, local `BUILD_VERSION`, package version).
 5. If `status` is not granted, keep the splash on “Access denied, please contact customer service.”, destroy the main window, and stop. A failed call uses the last encrypted register response; with no cache, access is denied.
-6. If granted, send **Loading menu…** and `LICENSE_UPDATE`, then close the splash and maximize, show, and focus the main window. A higher remote `buildVersion` shows the header **New release** button. `forceUpdate` opens that dialog and blocks navigation until the user installs.
+6. If granted, send **Loading menu…** and `LICENSE_UPDATE`, then close the splash and maximize, show, and focus the main window. A higher remote `buildVersion` shows the header **New release** button. `forceUpdate` opens that dialog and blocks navigation until the user installs. The dialog always has a close button, and the window controls stay above it so the app can be closed.
 
 Closing the last window quits the app on Windows.
 

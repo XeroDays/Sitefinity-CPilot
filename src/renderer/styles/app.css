@@ -255,6 +255,10 @@ body {
   border: 1px solid var(--border-strong);
 }
 
+.release-overlay {
+  top: var(--topbar-height);
+}
+
 .release-overlay.is-force-update {
   z-index: 80;
 }

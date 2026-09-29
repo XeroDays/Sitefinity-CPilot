@@ -22,6 +22,7 @@ The version must match the `"version"` field in `package.json`.
 - The license build number is 4
 - The splash screen shows the version as Version1.0.4
 - The About dialog shows the Softasium logo
+- The update dialog has a close button, including when an update is required
 
 ## [1.0.4] - 2026-09-29
 
