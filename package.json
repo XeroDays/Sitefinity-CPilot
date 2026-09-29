@@ -26,6 +26,7 @@
     },
     "files": [
       "src/**/*",
+      "resources/logo/softasium.png",
       "build/icon.png",
       "build/icon.ico",
       "package.json"

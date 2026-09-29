@@ -119,8 +119,8 @@
       logoWrap.className = "about-logo-wrap";
       const logo = document.createElement("img");
       logo.className = "about-logo";
-      logo.src = "assets/logo.png";
-      logo.alt = "";
+      logo.src = "../../resources/logo/softasium.png";
+      logo.alt = "Softasium";
       logo.width = 72;
       logo.height = 72;
       logoWrap.appendChild(logo);

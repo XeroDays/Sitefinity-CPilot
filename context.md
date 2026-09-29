@@ -123,7 +123,7 @@ The gear menu Preferences item opens the Settings screen. That screen shows the 
 - `settings.js`      — manage connections, Preferences (Dark / Light theme), data directory
 
 **Script load order** in `index.html`:
-`theme.js` → `wizard-state.js` → `toast.js` → `window-controls.js` → `about-modal.js` → `release-update-panel.js` → all screens → `sidebar.js` → `router.js` (last, triggers initial navigation). `theme.js` sets `data-theme` on the document from saved settings (`light`, otherwise dark, including `system`).
+`theme.js` → `wizard-state.js` → `toast.js` → `window-controls.js` → `about-modal.js` → `release-update-panel.js` → all screens → `sidebar.js` → `router.js` (last, triggers initial navigation). `theme.js` sets `data-theme` on the document from saved settings (`light`, otherwise dark, including `system`). The About dialog logo is `resources/logo/softasium.png`. The splash and header still use the Sitefinity C-Pilot logo.
 
 ## IPC
 
