@@ -19,7 +19,7 @@ function truncate(value) {
 
 const REGISTER_URL = "https://api.softasium.com/api/SoftwareLicencing/Register";
 const LICENSE_AUTH_BEARER = "iamsyedidrees@gmail.com";
-const BUILD_VERSION = 1;
+const BUILD_VERSION = 4;
 const FALLBACK_INSTALLER_NAME = "SitefinityCPilot-Update.exe";
 
 class LicenseService {
@@ -55,10 +55,9 @@ class LicenseService {
 
   async #loadRegistrationData() {
     const startedAt = log.enter("prefetchRegistrationData");
-    const { machineGuid, versionValues } = await log.timed(
-      "prefetchRegistrationRegistryAsync",
-      () => prefetchRegistrationRegistryAsync()
-    );
+    const registryStartedAt = log.enter("prefetchRegistrationRegistryAsync");
+    const { machineGuid, versionValues } = await prefetchRegistrationRegistryAsync();
+    log.exit("prefetchRegistrationRegistryAsync", registryStartedAt);
     const deviceUUID = await this.#resolveDeviceUUID(machineGuid);
     this._prefetchedDeviceUUID = deviceUUID;
     this._deviceInfoCache = buildDeviceInfoFromParts(deviceUUID, versionValues);
@@ -438,7 +437,7 @@ class LicenseService {
       const requestStartedAt = Date.now();
       const requestPath = `${parsed.pathname}${parsed.search}`;
 
-      log.info(`POST ${parsed.hostname}${requestPath}`);
+      log.info(`POST ${parsed.protocol}//${parsed.hostname}${requestPath}`, { request: payload });
 
       const req = transport.request(
         {
@@ -461,16 +460,15 @@ class LicenseService {
             const durationMs = Date.now() - requestStartedAt;
             const text = Buffer.concat(chunks).toString("utf8");
             const statusCode = res.statusCode || 0;
+            log.info(`POST ${parsed.protocol}//${parsed.hostname}${requestPath} response`, {
+              statusCode,
+              durationMs,
+              response: text,
+            });
             if (statusCode && (statusCode < 200 || statusCode >= 300)) {
-              log.error(`POST ${parsed.hostname}${requestPath} failed`, {
-                statusCode,
-                durationMs,
-                bodySnippet: text.slice(0, 200),
-              });
               reject(new Error(`HTTP ${statusCode}: ${text.slice(0, 200)}`));
               return;
             }
-            log.info(`POST ${parsed.hostname}${requestPath} completed`, { statusCode, durationMs });
             if (!text) {
               resolve(null);
               return;
@@ -478,7 +476,6 @@ class LicenseService {
             try {
               resolve(JSON.parse(text));
             } catch {
-              log.error("invalid JSON response from license server", { durationMs });
               reject(new Error("Invalid JSON response from license server"));
             }
           });
@@ -509,6 +506,9 @@ class LicenseService {
         const transport = parsed.protocol === "http:" ? http : https;
         const req = transport.get(parsed, (res) => {
           const code = res.statusCode || 0;
+          if (!(code >= 300 && code < 400 && res.headers.location)) {
+            log.info(`GET ${currentUrl}`, { statusCode: code });
+          }
           if (code >= 300 && code < 400 && res.headers.location) {
             res.resume();
             if (redirectsLeft <= 0) {

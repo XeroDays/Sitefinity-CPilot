@@ -34,7 +34,7 @@
     try {
       const info = await window.cpilot.getAppInfo();
       if (!info || !versionLabel) return;
-      versionLabel.textContent = `Version v${info.version || "—"}`;
+      versionLabel.textContent = `Version${info.version || "—"}`;
     } catch (err) {
       log("error", "loadVersionLabel failed", { error: String(err.message || err) });
     }

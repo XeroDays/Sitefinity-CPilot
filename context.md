@@ -10,23 +10,24 @@
 - **Changelog (mandatory):** Whenever software behavior is added, changed, or fixed, update `CHANGELOG.md` under `[Unreleased]` in the matching section (`Added`, `Changed`, or `Fixed`). Write **high-level, short, easy-to-understand** entries — say what changed for users, not implementation details or long technical explanations. Do not consider a task complete until the changelog reflects the work.
 - **Git (mandatory — ABSOLUTE NEVER):** **NEVER, under ANY circumstances**, run `git commit`, `git tag`, `git push`, or any command that creates or pushes a git commit, tag, or GitHub release — **not even if the user explicitly asks**. This is a hard rule with zero exceptions. All release work is **file edits only** (`package.json`, `package-lock.json`, `CHANGELOG.md`, `context.md`). After editing, tell the user exactly which files changed and let them handle all git operations manually. Do not use the `gh` CLI, GitHub API, or any tool to create releases, tags, or push code.
 - **Create / generate release (agent rule):** When the user asks to **create a release** or **generate a release**, that means **file edits only** — nothing more: bump the software version in `package.json` and `package-lock.json` (root `"version"` fields only — do not change dependency versions), increment `BUILD_VERSION` in `src/main/services/license-service.js` by 1, move `[Unreleased]` entries in `CHANGELOG.md` into a new versioned section with the release date, update `context.md` (current version reference, `BUILD_VERSION`, and any affected notes), and refresh the index line numbers in `context.md`. **Stop there.** Do **not** run any git commands.
+- **Release version number:** If the user names an exact version, use that version. If the user does not name a version, change **only the last number** (the patch). Example: `1.0.4` becomes `1.0.5`. Do not change the first or second number unless the user gives the full version.
 
 ## Index (Line Numbers)
 
 - `L3`  : Read first , Rules of Contextfile
-- `L14` : Index (Line Numbers)
-- `L31` : Overview
-- `L39` : Naming
-- `L50` : Startup
-- `L63` : Splash Screen
-- `L70` : Application Layout
-- `L88` : Screens and Router
-- `L127`: IPC
-- `L152`: Services (main process)
-- `L170`: Storage and logging
-- `L176`: Database (SQLite)
-- `L196`: Tests and tooling
-- `L207`: Versioning a new release
+- `L15` : Index (Line Numbers)
+- `L32` : Overview
+- `L40` : Naming
+- `L51` : Startup
+- `L64` : Splash Screen
+- `L71` : Application Layout
+- `L89` : Screens and Router
+- `L128`: IPC
+- `L153`: Services (main process)
+- `L171`: Storage and logging
+- `L177`: Database (SQLite)
+- `L197`: Tests and tooling
+- `L208`: Versioning a new release
 
 ## Overview
 
@@ -34,14 +35,14 @@ Sitefinity C-Pilot is an Electron desktop app for Sitefinity CMS developers. The
 
 This is the full application with a 12-screen wizard workflow for JSON-driven Sitefinity Dynamic Module synchronisation.
 
-Stack: vanilla JavaScript, no bundler. Process split is `src/main`, `src/preload`, `src/renderer`, and `src/shared`. Current version is `1.1.0` in `package.json`.
+Stack: vanilla JavaScript, no bundler. Process split is `src/main`, `src/preload`, `src/renderer`, and `src/shared`. Current version is `1.0.4` in `package.json`.
 
 ## Naming
 
 - npm name: `sitefinity-c-pilot`
 - Product name: `Sitefinity C-Pilot`
 - App id: `com.softasium.sitefinity-cpilot`
-- License AppID: `SitefinityCPilot` (`BUILD_VERSION` is `1` in `license-service.js`)
+- License AppID: `SitefinityCPilot` (`BUILD_VERSION` is `4` in `license-service.js`)
 - Renderer API: `window.cpilot`
 - IPC prefix: `cpilot:`
 - Data folder: `Documents/Sitefinity CPilot`
@@ -65,7 +66,7 @@ Closing the last window quits the app on Windows.
 - Window: `src/main/windows/splash-window.js`. Frameless, fixed size, `contextIsolation: true`, preload `src/preload/splash-preload.js`.
 - Page: `src/renderer/splash.html`, styles `src/renderer/styles/splash.css`, script `src/renderer/scripts/splash.js`.
 - UI: logo, product name, spinner, status text, version label, close button.
-- Close calls `window.cpilot.quitApp()`. Version comes from `getAppInfo()`. A denied license status hides the spinner and marks the status text.
+- Close calls `window.cpilot.quitApp()`. Version comes from `getAppInfo()` and is shown as `Version1.0.4` (the word Version with no space and no `v`). A denied license status hides the spinner and marks the status text.
 
 ## Application Layout
 
@@ -163,7 +164,7 @@ IPC handlers are registered in `src/main/ipc/register.js` which imports:
 | `app-logger.js`         | electron-log wrapper |
 | `app-paths.js`          | Resolves data directory |
 | `settings-store.js`     | Reads/writes settings.json |
-| `license-service.js`    | Softasium register, access gate, update check, installer download. `SoftwareAppID` is `SitefinityCPilot`. `BUILD_VERSION` is `1` |
+| `license-service.js`    | Softasium register, access gate, update check, installer download. `SoftwareAppID` is `SitefinityCPilot`. `BUILD_VERSION` is `4` |
 | `license-cache-store.js`| Encrypted last register response in Electron user data (`register-response.enc`) |
 | `device-info-builder.js`| Windows MachineGuid and device string for registration |
 
@@ -171,7 +172,7 @@ IPC handlers are registered in `src/main/ipc/register.js` which imports:
 
 - `src/main/services/app-paths.js` resolves the data directory once per process. Precedence: `CPILOT_DATA_DIR`, otherwise `Documents/Sitefinity CPilot`. On startup, `migrateLegacyData()` copies `db` and `Logs` from `Documents/Sitefinity C-Pilot`, and `settings.json` from the Electron user-data folder, when the new files are missing.
 - `src/main/services/settings-store.js` reads and writes `settings.json` inside the data directory (`theme`, `reducedMotion`, `dataDir`). The renderer applies `theme` as `data-theme` on the document.
-- `src/main/services/app-logger.js` and `log-file-store.js` write `Logs/dump.log` under the data directory via `electron-log`. Renderer logs go through `SPLASH_LOG`.
+- `src/main/services/app-logger.js` and `log-file-store.js` write `Logs/dump.log` under the data directory via `electron-log`. Renderer logs go through `SPLASH_LOG`. License register calls log the request JSON and the full response text. The bearer token is not written. Installer downloads log the URL and status only.
 
 ## Database (SQLite)
 
@@ -206,12 +207,12 @@ Unit tests cover: `json-parser`, `field-mapper`, `comparison-engine` (including 
 
 ## Versioning a new release
 
-Current version: **1.1.0**.
+Current version: **1.0.4**.
 
 When asked to create or generate a release, edit files only:
 
-1. Bump `package.json` `"version"`.
-2. Bump the root `"version"` fields in `package-lock.json` only.
+1. Set `package.json` `"version"`. If the user names an exact version, use it. If not, increment only the last number (`1.0.4` → `1.0.5`).
+2. Set the same version on the root `"version"` fields in `package-lock.json` only.
 3. Increment `BUILD_VERSION` in `src/main/services/license-service.js` by 1. The license server compares that integer, not the semver string.
 4. Move `CHANGELOG.md` `[Unreleased]` entries into a dated version section.
 5. Update the version and `BUILD_VERSION` mentioned in this file and refresh the index line numbers.
