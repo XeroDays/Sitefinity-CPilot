@@ -13,6 +13,7 @@ const sfClient = require("./sitefinity-client");
 const opRepo   = require("../services/db/operation-repository");
 
 var _cancelRequested = false;
+var _running = false;
 
 /**
  * Request cancellation of the current execution.
@@ -38,7 +39,19 @@ function requestCancel() {
  * @returns {object} operation summary
  */
 async function execute(opts, onProgress) {
+  if (_running) {
+    throw new Error("An operation is already running.");
+  }
+  _running = true;
   _cancelRequested = false;
+  try {
+    return await runExecute(opts, onProgress);
+  } finally {
+    _running = false;
+  }
+}
+
+async function runExecute(opts, onProgress) {
 
   var records      = opts.records || [];
   var selectedSet  = opts.selectedIds ? new Set(opts.selectedIds) : null;

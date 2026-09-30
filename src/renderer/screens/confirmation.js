@@ -41,12 +41,19 @@
           <span><strong>${toDelete}</strong> record(s) will be permanently deleted from Sitefinity. This action cannot be undone.</span>
         </div>` : "";
 
+      var staleNotice = state.comparisonStale ? `
+        <div class="alert alert--warning" style="margin-bottom:1.5rem">
+          <i class="fa-solid fa-triangle-exclamation alert__icon"></i>
+          <span>This operation already changed Sitefinity. Review the comparison before executing again.</span>
+        </div>` : "";
+
       screen.innerHTML = `
         <div class="cpilot-screen__header">
           <h1 class="cpilot-screen__title">Confirm Execution</h1>
           <p class="cpilot-screen__subtitle">Review the planned operations and confirm to begin.</p>
         </div>
         <div class="cpilot-screen__body">
+          ${staleNotice}
           ${deleteWarning}
 
           <div class="confirmation-summary">
@@ -94,6 +101,10 @@
       on(footer.querySelector("#conf-exec-btn"), "click", function () {
         var opName = screen.querySelector("#conf-op-name").value.trim();
         window.wizardState.set({ operationName: opName });
+        if (window.wizardState.get().comparisonStale) {
+          window.cpilotRouter.navigateTo("comparison");
+          return;
+        }
         window.cpilotRouter.navigateTo("execution");
       });
     },

@@ -2,12 +2,24 @@
   "use strict";
 
   var _listeners = [];
+  var _progressHandler = null;
+  var _runPromise = null;
+  var _runStarted = false;
+  var _runSettled = false;
+  var _alive = false;
+
   function on(el, evt, fn) { el.addEventListener(evt, fn); _listeners.push({ el, evt, fn }); }
 
   window.Screens = window.Screens || {};
 
   window.Screens.execution = {
     render: function (container) {
+      _alive = true;
+      _progressHandler = null;
+      _runPromise = null;
+      _runStarted = false;
+      _runSettled = false;
+
       container.innerHTML = "";
       container.appendChild(window.buildWizardProgress("execution"));
 
@@ -55,14 +67,19 @@
       `;
 
       var footer = document.createElement("div");
-      footer.className = "cpilot-screen__footer cpilot-screen__footer--end";
+      footer.className = "cpilot-screen__footer";
       footer.innerHTML = `
-        <button type="button" id="exec-cancel-btn" class="btn btn-ghost">
-          <i class="fa-solid fa-ban" aria-hidden="true"></i> Cancel Remaining
+        <button type="button" id="exec-back-btn" class="btn btn-ghost">
+          <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back to Confirmation
         </button>
-        <button type="button" id="exec-results-btn" class="btn btn-primary" disabled>
-          View Results <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
-        </button>
+        <div style="display:flex;gap:0.6rem">
+          <button type="button" id="exec-cancel-btn" class="btn btn-ghost">
+            <i class="fa-solid fa-ban" aria-hidden="true"></i> Cancel Remaining
+          </button>
+          <button type="button" id="exec-results-btn" class="btn btn-primary" disabled>
+            View Results <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+          </button>
+        </div>
       `;
       screen.appendChild(footer);
 
@@ -73,6 +90,7 @@
       var subtitle   = screen.querySelector("#exec-subtitle");
       var doneBar    = screen.querySelector("#exec-done-bar");
       var doneMsg    = screen.querySelector("#exec-done-msg");
+      var backBtn    = footer.querySelector("#exec-back-btn");
       var cancelBtn  = footer.querySelector("#exec-cancel-btn");
       var resultsBtn = footer.querySelector("#exec-results-btn");
 
@@ -95,6 +113,7 @@
       }
 
       function appendLog(message, level) {
+        if (!_alive) return;
         var p = document.createElement("p");
         var classes = "log-entry" + (level ? " log-entry--" + level : "");
         // Bold green only for the final operation summary when there were no failures.
@@ -114,13 +133,30 @@
         await window.cpilot.cancelSync();
       });
 
+      on(backBtn, "click", async function () {
+        backBtn.disabled = true;
+        if (_runStarted && !_runSettled) {
+          cancelBtn.disabled = true;
+          appendLog("Cancellation requested…", "warn");
+          try { await window.cpilot.cancelSync(); } catch (e) { /* settle below */ }
+          if (_runPromise) {
+            try { await _runPromise; } catch (e) { /* startExecution records the error */ }
+          }
+        }
+        if (!_alive) return;
+        if (_runStarted) {
+          window.wizardState.set({ comparisonStale: true });
+        }
+        window.cpilotRouter.navigateTo("confirmation");
+      });
+
       on(resultsBtn, "click", function () {
-        window.cpilotRouter.navigateTo("results", { operationId: state.operationId });
+        window.cpilotRouter.navigateTo("results", { operationId: window.wizardState.get().operationId });
       });
 
       // Subscribe to progress events
-      var _progressHandler = window.cpilot.onSyncProgress(function (data) {
-        if (data.type !== "exec-progress") return;
+      _progressHandler = window.cpilot.onSyncProgress(function (data) {
+        if (!_alive || data.type !== "exec-progress") return;
 
         setCount("es-total",   data.total || 0);
         setCount("es-created", data.created || 0);
@@ -153,7 +189,8 @@
           return;
         }
 
-        var result = await window.cpilot.executeSync({
+        _runStarted = true;
+        _runPromise = window.cpilot.executeSync({
           records:         cmpResult.records,
           selectedIds:     state.selectedRecordIds,
           connection:      state.connection,
@@ -164,7 +201,21 @@
           sourceFileName:  state.jsonSource ? state.jsonSource.fileName : null,
         });
 
-        window.cpilot.offSyncProgress(_progressHandler);
+        var result;
+        try {
+          result = await _runPromise;
+        } catch (err) {
+          result = { ok: false, error: err && err.message ? err.message : String(err) };
+        } finally {
+          _runSettled = true;
+        }
+
+        if (_progressHandler) {
+          window.cpilot.offSyncProgress(_progressHandler);
+          _progressHandler = null;
+        }
+
+        if (!_alive) return;
 
         if (result.ok) {
           window.wizardState.setOperationId(result.operationId);
@@ -190,6 +241,11 @@
     },
 
     destroy: function () {
+      _alive = false;
+      if (_progressHandler) {
+        window.cpilot.offSyncProgress(_progressHandler);
+        _progressHandler = null;
+      }
       _listeners.forEach(function (l) { l.el.removeEventListener(l.evt, l.fn); });
       _listeners = [];
     },

@@ -17,6 +17,10 @@ The version must match the `"version"` field in `package.json`.
 
 ## [Unreleased]
 
+### Added
+
+- Back is available on Executing Operation so you can change the operation and run it again
+
 ### Changed
 
 - The license build number is 4

@@ -100,9 +100,9 @@ The gear menu Preferences item opens the Settings screen. That screen shows the 
 
 **Wizard state** (`src/renderer/scripts/wizard-state.js`):
 - `window.wizardState` — in-memory store for the active wizard operation.
-- Fields: `connection`, `moduleInfo`, `jsonSource`, `fieldMappings`, `syncSettings`, `comparisonResult`, `selectedRecordIds`, `operationId`, `operationName`, `savedConfigId`.
+- Fields: `connection`, `moduleInfo`, `jsonSource`, `fieldMappings`, `syncSettings`, `comparisonResult`, `selectedRecordIds`, `operationId`, `comparisonStale`, `operationName`, `savedConfigId`.
 - Cleared by `window.wizardState.reset()`.
-- `setJsonSource` replaces the document and refreshes every later step: clears `fieldMappings`, `comparisonResult`, `selectedRecordIds`, and `operationId`, and drops `matchingKey` if it is no longer a Sitefinity module field (sync mode/toggles are kept). `setFieldMappings` and `setSyncSettings` also clear the comparison plan. Field Mapping rebuilds from the new fields; Data Comparison reruns when its cache was cleared.
+- `setJsonSource` replaces the document and refreshes every later step: clears `fieldMappings`, `comparisonResult`, `selectedRecordIds`, `operationId`, and `comparisonStale`, and drops `matchingKey` if it is no longer a Sitefinity module field (sync mode/toggles are kept). `setFieldMappings` and `setSyncSettings` also clear the comparison plan. Field Mapping rebuilds from the new fields; Data Comparison reruns when its cache was cleared. Leaving Execution after a run has started sets `comparisonStale` so Comparison fetches Sitefinity again before another execute.
 
 **Wizard progress bar** (`window.buildWizardProgress(activeStepName)` — exported from `connection.js`):
 - Renders a 8-step horizontal progress bar at the top of every wizard screen.
@@ -116,7 +116,7 @@ The gear menu Preferences item opens the Settings screen. That screen shows the 
 - `sync-settings.js` — matching key, sync mode radio cards, deletion config, advanced options
 - `comparison.js`    — fetches existing records, runs comparison engine, shows filterable table + detail drawer
 - `confirmation.js`  — summary before execution, operation name field
-- `execution.js`     — live progress bar, log stream, cancel button
+- `execution.js`     — live progress bar, log stream, cancel button. Back stays available during the run; remaining work is cancelled, and the comparison is refreshed before another execute
 - `results.js`       — summary cards, filterable results table, CSV/JSON export, save config
 - `saved-configs.js` — list, run, delete saved configurations
 - `history.js`       — operation history table with details link
@@ -160,7 +160,7 @@ IPC handlers are registered in `src/main/ipc/register.js` which imports:
 | `json-parser.js`        | Parse, validate, detect root type, infer field types, find duplicates. Item detection walks nested objects and scores candidate arrays (any property name, any depth); nested object fields on an item are not treated as separate item lists |
 | `field-mapper.js`       | autoMap (exact + case-insensitive). Unmapped rows start ignored. applyMappings, getMatchingKeyValue, validateMappings |
 | `comparison-engine.js`  | compare() — normalise, index existing, classify each source record, detect missing |
-| `sync-executor.js`      | Sequential API execution with IPC progress events; cancel support; DB persistence |
+| `sync-executor.js`      | Sequential API execution with IPC progress events; cancel support; a second run is refused while one is active; DB persistence |
 | `app-logger.js`         | electron-log wrapper |
 | `app-paths.js`          | Resolves data directory |
 | `settings-store.js`     | Reads/writes settings.json |

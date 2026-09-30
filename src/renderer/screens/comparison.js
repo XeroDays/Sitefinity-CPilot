@@ -67,9 +67,10 @@
         // Reuse only when upstream left comparisonResult intact (back/forward
         // without changing JSON, mappings, or sync settings). setJsonSource
         // clears the plan so a replaced/reloaded file always triggers a fresh run.
+        // A started execution marks the plan stale so Sitefinity is fetched again.
         var live = window.wizardState.get();
         var existing = live.comparisonResult;
-        if (existing) {
+        if (existing && !live.comparisonStale) {
           window.cpilot.offSyncProgress(_progressHandler);
           renderResult(existing);
           return;

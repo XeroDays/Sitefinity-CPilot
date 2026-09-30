@@ -65,6 +65,9 @@
     // Running operation
     operationId: null,
 
+    // True after a started execution is left, so Comparison must fetch again
+    comparisonStale: false,
+
     // For saving config
     operationName: "",
     savedConfigId: null,
@@ -77,6 +80,7 @@
     _state.comparisonResult = null;
     _state.selectedRecordIds = null;
     _state.operationId = null;
+    _state.comparisonStale = false;
   }
 
   /**
@@ -149,6 +153,7 @@
 
     setComparisonResult: function (result) {
       _state.comparisonResult = result;
+      _state.comparisonStale = false;
       // Default: select all non-skipped, non-conflict records
       if (result && result.records) {
         _state.selectedRecordIds = result.records
