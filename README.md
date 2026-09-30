@@ -1,4 +1,4 @@
-# Sitefinity C-Pilot
+# Sitefinity Content-Pilot
 
 **Your JSON-powered copilot for Sitefinity content management.**
 
